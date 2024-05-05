@@ -6,6 +6,7 @@ from OpenScriptView.EditScriptTable import EditScriptTable, EditScriptTableDataS
 
 class EditScriptWidgetProtocol(Protocol):
     def set_events_data(self, data): pass
+    def select_index(self, index): pass
     def select_next_index(self): pass
     def on_script_action_changed(self): pass
 
@@ -64,7 +65,10 @@ class EditScriptWidget(QWidget):
         
         self.delete_button.setEnabled(len(self.data_source.data) > 0)
         self.edit_button.setEnabled(len(self.data_source.data) > 0)
-
+    
+    def select_index(self, index):
+        self.table.selectRow(index)
+    
     def select_next_index(self):
         current_index = self.table.currentRow()
         
@@ -75,7 +79,9 @@ class EditScriptWidget(QWidget):
         self.save_button.setEnabled(True)
     
     def insert_event(self):
-        self.delegate.insert_script_action(self.table.currentRow())
+        index = self.table.currentRow()
+        index = index if index >= 0 else 0
+        self.delegate.insert_script_action(index)
     
     def delete_event(self):
         self.delegate.delete_script_action(self.table.currentRow())

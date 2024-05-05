@@ -60,14 +60,14 @@ class EditScriptActionRouter(Protocol):
         
         dialog.exec()
     
-    def close(self, sender):
+    def close(self, sender, save_changes):
         assert self.widget is not None
         input_event = sender.input_event
         event_index = sender.event_index
         self.widget.close()
         self.widget = None
         
-        if isinstance(sender, EditScriptActionPresenter):
+        if save_changes and isinstance(sender, EditScriptActionPresenter):
             if self.is_insert:
                 self.edit_script_presenter.on_save_insert_script_action(input_event)
             else:

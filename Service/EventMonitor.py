@@ -2,7 +2,10 @@
 from PyQt5.QtCore import pyqtSignal, QObject
 from pynput.keyboard import Listener as KeyboardListener
 from pynput import mouse
-from Model.InputEvent import KeystrokeEvent, MouseMoveEvent, MouseClickEvent, MouseScrollEvent
+
+from Model.KeyPressType import KeyPressType
+from Model.KeyboardInputEvent import KeystrokeEvent
+from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from Model.Point import Point
 
 
@@ -72,7 +75,7 @@ class KeyboardEventMonitor(QObject):
         if not self.is_running: return False
         self.print(f"{key} pressed")
         
-        self.signal_main.emit(KeystrokeEvent(True, key))
+        self.signal_main.emit(KeystrokeEvent(KeyPressType.PRESS, key))
         
         return self.is_running
     
@@ -80,12 +83,12 @@ class KeyboardEventMonitor(QObject):
         if not self.is_running: return False
         self.print(f"{key} released")
         
-        self.signal_main.emit(KeystrokeEvent(False, key))
+        self.signal_main.emit(KeystrokeEvent(KeyPressType.RELEASE, key))
         
         return self.is_running
     
     def emit_event_on_main(self, value):
-        if value.is_pressed:
+        if value.press == KeyPressType.PRESS:
             self.on_press_callback(value)
         else:
             self.on_release_callback(value)
@@ -159,9 +162,12 @@ class MouseEventMonitor(QObject):
     
     def on_click(self, x, y, key, is_pressed) -> bool:
         if not self.is_running: return False
-        self.print(f"{key} {'pressed' if is_pressed else 'released'}")
         
-        self.signal_main_click.emit(MouseClickEvent(is_pressed, key, Point(x, y)))
+        press = KeyPressType.PRESS if is_pressed else KeyPressType.RELEASE
+        
+        self.print(f"{key} {press.name}")
+        
+        self.signal_main_click.emit(MouseClickEvent(press, key, Point(x, y)))
         
         return self.is_running
     
@@ -184,7 +190,7 @@ class MouseEventMonitor(QObject):
         self.on_move_callback(event)
     
     def emit_event_on_main_click(self, event):
-        if event.is_pressed:
+        if event.press == KeyPressType.PRESS:
             self.on_press_callback(event)
         else:
             self.on_release_callback(event)

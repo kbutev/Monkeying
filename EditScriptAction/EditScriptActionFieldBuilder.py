@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import QWidget
 from EditScriptAction.EditScriptActionField import EditScriptActionFieldFloat, EditScriptActionFieldPoint, \
     EditScriptActionFieldKeyboardChar, EditScriptActionFieldDropDown, EditScriptActionField
 from EditScriptAction.EditScriptActionFieldPresenter import EditScriptActionFieldPresenter
-from Model.InputEvent import InputEvent, MouseScrollEvent, KeystrokeEvent, MouseClickEvent, MouseMoveEvent
+from Model.InputEvent import InputEvent
+from Model.KeyboardInputEvent import KeystrokeEvent
+from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from Model.InputEventType import InputEventType
 from pynput.mouse import Button as MouseKey
 

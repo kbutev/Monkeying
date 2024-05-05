@@ -51,5 +51,6 @@ class RecordScriptTable(QTableWidget):
                     self.setItem(row, column, self.data_source.item(column, row))
             
             if self.data_source.count() > 0:
+                current_selection = 0 if current_selection < 0 else current_selection
                 new_index = current_selection if current_selection < self.data_source.count() else self.data_source.count() - 1
                 self.selectRow(new_index)

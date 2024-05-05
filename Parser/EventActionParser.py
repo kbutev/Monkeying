@@ -1,6 +1,8 @@
 from typing import Protocol
-from Model.InputEvent import InputEventDescription, InputEvent, KeystrokeEvent, MouseMoveEvent, MouseClickEvent, \
-    MouseScrollEvent
+from Model.InputEvent import InputEventDescription, InputEvent
+from Model.KeyPressType import KeyPressType
+from Model.KeyboardInputEvent import KeystrokeEvent
+from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from Model.InputEventType import InputEventType
 from Model.JSONInputEvent import JSONInputEvent, POINT_NAME_GENERIC, POINT_NAME_SCROLL
 
@@ -21,19 +23,23 @@ class EventActionParser(EventActionParserProtocol):
         
         match event_type:
             case InputEventType.KEYBOARD_PRESS:
-                result = KeystrokeEvent(True, event.keystroke())
+                result = KeystrokeEvent(KeyPressType.PRESS, event.keystroke())
             case InputEventType.KEYBOARD_RELEASE:
-                result = KeystrokeEvent(False, event.keystroke())
+                result = KeystrokeEvent(KeyPressType.RELEASE, event.keystroke())
+            case InputEventType.KEYBOARD_CLICK:
+                result = KeystrokeEvent(KeyPressType.CLICK, event.keystroke())
             case InputEventType.MOUSE_MOVE:
                 result = MouseMoveEvent(event.point())
             case InputEventType.MOUSE_PRESS:
-                result = MouseClickEvent(True, event.keystroke(), event.point())
+                result = MouseClickEvent(KeyPressType.PRESS, event.keystroke(), event.point())
             case InputEventType.MOUSE_RELEASE:
-                result = MouseClickEvent(False, event.keystroke(), event.point())
+                result = MouseClickEvent(KeyPressType.RELEASE, event.keystroke(), event.point())
+            case InputEventType.MOUSE_CLICK:
+                result = MouseClickEvent(KeyPressType.CLICK, event.keystroke(), event.point())
             case InputEventType.MOUSE_SCROLL:
                 result = MouseScrollEvent(event.named_point(POINT_NAME_GENERIC), event.named_point(POINT_NAME_SCROLL))
             case _:
-                assert False
+                assert False # Input event is not implemented or bad type
         
         result.set_time(float(event.time()))
         return result

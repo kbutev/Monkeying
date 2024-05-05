@@ -1,11 +1,11 @@
 from typing import Protocol
 from PyQt5.QtWidgets import QWidget
-
 from EditScriptAction.EditScriptActionField import EditScriptActionField
 from EditScriptAction.EditScriptActionFieldBuilder import EditScriptActionFieldBuilderProtocol, \
     EditScriptActionFieldBuilder
 from EditScriptAction.EditScriptActionWidget import EditScriptActionWidgetProtocol
-from Model.InputEvent import InputEvent, KeystrokeEvent
+from Model.InputEvent import InputEvent
+from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.JSONInputEvent import JSONInputEvent
 from Parser.EventActionParser import EventActionParserProtocol, EventActionParser
 from Presenter.Presenter import Presenter
@@ -14,7 +14,7 @@ from pynput.mouse import Button as MouseKey
 
 class EditScriptActionPresenterRouter(Protocol):
     def prompt_choose_key_dialog(self, sender): pass
-    def close(self, sender): pass
+    def close(self, sender, save_changes): pass
 
 class EditScriptActionPresenter(Presenter):
     router: EditScriptActionPresenterRouter = None
@@ -50,10 +50,10 @@ class EditScriptActionPresenter(Presenter):
         self.router.prompt_choose_key_dialog(sender)
     
     def save(self):
-        self.router.close(self)
+        self.router.close(self, True)
     
     def close(self):
-        self.router.close(self)
+        self.router.close(self, False)
     
     def on_type_changed(self, value):
         self.widget.reset()

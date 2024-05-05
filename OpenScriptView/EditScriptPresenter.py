@@ -1,6 +1,7 @@
 from typing import Protocol
 
-from Model.InputEvent import KeystrokeEvent
+from Model.KeyPressType import KeyPressType
+from Model.KeyboardInputEvent import KeystrokeEvent
 from OpenScriptView.EditScriptWidget import EditScriptWidgetProtocol
 from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser, \
     EventActionParserProtocol, EventActionParser
@@ -8,6 +9,7 @@ from Presenter.Presenter import Presenter
 from Service.EventStorage import EventStorage
 from Utilities import Path
 
+INSERT_EVENT_TIME_ADVANCE = 0.1 # When inserting a new event, it's time is based on the currently selected event plus this value
 
 class EditScriptPresenterRouter(Protocol):
     def enable_tabs(self, enabled): pass
@@ -62,12 +64,18 @@ class EditScriptPresenter(Presenter):
             storage_data.append(result.values)
         
         self.storage.data = storage_data
+        self.storage.update_modified_date()
         self.storage.write_to_file(self.script_path)
     
     def insert_script_action(self, event_index):
-        assert 0 <= event_index and event_index < len(self.events)
-        new_event = KeystrokeEvent(False, 'x')
-        new_event.set_time(self.events[event_index].time())
+        assert 0 <= event_index
+        new_event = KeystrokeEvent(KeyPressType.CLICK, 'x')
+        
+        if len(self.events) > 0:
+            new_event.set_time(self.events[event_index].time() + INSERT_EVENT_TIME_ADVANCE)
+        else:
+            new_event.set_time(0)
+        
         self.router.insert_script_action(self.widget, new_event)
     
     def delete_script_action(self, event_index):
@@ -85,9 +93,11 @@ class EditScriptPresenter(Presenter):
             return
         
         self.events.append(input_event)
-        self.widget.select_next_index()
         self.widget.on_script_action_changed()
         self.update_data()
+        
+        # Select next index (to point at the new event)
+        self.widget.select_next_index()
     
     def on_save_edit_script_action(self, event_index, input_event):
         if input_event is None:

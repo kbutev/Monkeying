@@ -1,10 +1,7 @@
 import time
 from typing import Protocol
-
 from PyQt5.QtCore import QTimer
-
 from Model.InputEventType import InputEventType
-from Model.JSONInputEvent import JSONInputEvent
 from Parser.EventActionParser import EventActionToStringParser, EventActionToStringParserProtocol, \
     EventActionToStringParserGrouping
 from Presenter.Presenter import Presenter
@@ -12,7 +9,6 @@ from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventMonitorManager import EventMonitorManager
 from MainView.RecordScriptWidget import RecordScriptWidgetProtocol
 from pynput.keyboard import Key as KButton
-
 from Service.EventStorage import EventStorage
 
 
@@ -83,6 +79,7 @@ class RecordScriptPresenter(Presenter):
         self.event_monitor.start()
         self.update_events()
         self.update_timer.start()
+        self.hotkey_click_time = time.time()
         
         # If command was initiated by the widget, do not forward it back
         if sender is not self.widget:
@@ -121,9 +118,9 @@ class RecordScriptPresenter(Presenter):
         if time_since_last_usage < self.hotkey_suspend_interval:
             return
         
-        self.hotkey_click_time = time.time()
-        
         if event.key == self.trigger_key:
+            self.hotkey_click_time = time.time()
+            
             if self.is_running:
                 self.stop_recording(sender=self)
             else:
