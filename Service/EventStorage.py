@@ -3,7 +3,7 @@ from typing import Any
 
 from Model.InputEvent import MouseScrollEvent, InputEvent
 from Model.InputEventType import InputEventType
-from Model.JSONInputEvent import JSONInputEvent
+from Model.JSONInputEvent import POINT_NAME_GENERIC, POINT_NAME_SCROLL
 from Parser.JSONInputEventParser import JSONInputEventParser
 from Utilities.Path import Path
 
@@ -29,33 +29,31 @@ class EventStorage:
         
         match event_type:
             case InputEventType.KEYBOARD_PRESS:
-                entry = self.parser.build_entry(event.time, event_type)
+                entry = self.parser.build_entry(event.time(), event_type)
                 entry.set_keystroke(event.key_as_string())
             case InputEventType.KEYBOARD_RELEASE:
-                entry = self.parser.build_entry(event.time, event_type)
+                entry = self.parser.build_entry(event.time(), event_type)
                 entry.set_keystroke(event.key_as_string())
             case InputEventType.MOUSE_MOVE:
-                entry = self.parser.build_entry(event.time, event_type)
+                entry = self.parser.build_entry(event.time(), event_type)
                 entry.set_point(event.point)
             case InputEventType.MOUSE_PRESS:
-                entry = self.parser.build_entry(event.time, event_type)
+                entry = self.parser.build_entry(event.time(), event_type)
                 entry.set_keystroke(event.key_as_string())
                 entry.set_point(event.point)
             case InputEventType.MOUSE_RELEASE:
-                entry = self.parser.build_entry(event.time, event_type)
+                entry = self.parser.build_entry(event.time(), event_type)
                 entry.set_keystroke(event.key_as_string())
                 entry.set_point(event.point)
             case InputEventType.MOUSE_SCROLL:
                 scroll_value: MouseScrollEvent = event
-                entry = self.parser.build_entry(event.time, event_type)
-                entry.set_named_point(JSONInputEvent.POINT_NAME_GENERIC, scroll_value.point)
-                entry.set_named_point(JSONInputEvent.POINT_NAME_SCROLL, scroll_value.scroll_dt)
+                entry = self.parser.build_entry(event.time(), event_type)
+                entry.set_named_point(POINT_NAME_GENERIC, scroll_value.point)
+                entry.set_named_point(POINT_NAME_SCROLL, scroll_value.scroll_dt)
             case _:
                 raise ValueError("Invalid event")
         
         self.data.append(entry.values.copy())
-        
-        print(f"add {event_type} {event.value_as_string()} [{len(self.data)}]")
     
     def first_entry(self) -> map:
         assert len(self.data) > 0

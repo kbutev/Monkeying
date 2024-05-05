@@ -9,11 +9,9 @@ router = MainRouter()
 
 app = QApplication(sys.argv)
 app.setApplicationName('Monkeying')
-widget = MainWidget()
-widget.show()
-widget.setMaximumSize(1024, 640)
-
-router.setup(widget)
+router.setup()
+router.widget.show()
+router.widget.setMaximumSize(1024, 640)
 
 # Exec
 app.exec()

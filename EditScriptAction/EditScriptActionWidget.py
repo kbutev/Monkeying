@@ -1,52 +1,44 @@
+from PyQt5 import sip
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import *
 from typing import Protocol
-
-from EditScriptAction.EditScriptActionTable import EditScriptActionTable, EditScriptActionTableDataSource
-
+from EditScriptAction.EditScriptActionField import EditScriptActionField
 
 class EditScriptActionWidgetProtocol(Protocol):
+    def reset(self): pass
+    def setup_dynamic_fields(self, fields): pass
+    def fill_values(self): pass
     def save_changes(self): pass
     def cancel_changes(self): pass
 
 class EditWidgetDelegate(Protocol):
+    def build_dynamic_fields(self) -> [QWidget]: pass
+    def prompt_choose_key_dialog(self): pass
     def save(self): pass
     def close(self): pass
 
 class EditScriptActionWidget(QWidget):
     delegate: EditWidgetDelegate = None
     
-    timestamp_text: QLabel
-    timestamp_field: QLineEdit
-    action_kind: QComboBox
-    table: EditScriptActionTable
+    layout: QVBoxLayout
+    layout_dynamic_fields_start_index = 0
+    
+    dynamic_fields_initiated = False
+    
     save_button: QPushButton
     cancel_button: QPushButton
     
-    data_source = EditScriptActionTableDataSource()
+    timestamp_validator = QDoubleValidator()
     
     def __init__(self, parent=None):
         super(EditScriptActionWidget, self).__init__(parent)
         self.setup()
     
     def setup(self):
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
+        self.layout = layout
         
-        self.timestamp_text = QLabel('Time')
-        layout.addWidget(self.timestamp_text)
-        self.timestamp_field = QLineEdit()
-        self.timestamp_field.resize(280, 40)
-        layout.addWidget(self.timestamp_field)
-        
-        self.action_kind = QComboBox()
-        self.action_kind.addItem('Keyboard press')
-        self.action_kind.addItem('Keyboard release')
-        self.action_kind.addItem('Mouse press')
-        self.action_kind.addItem('Mouse release')
-        layout.addWidget(self.action_kind)
-        
-        self.table = EditScriptActionTable()
-        self.table.data_source = self.data_source
-        layout.addWidget(self.table)
+        self.layout_dynamic_fields_start_index = 0
         
         self.save_button = QPushButton('Save')
         layout.addWidget(self.save_button)
@@ -56,10 +48,48 @@ class EditScriptActionWidget(QWidget):
         layout.addWidget(self.cancel_button)
         self.cancel_button.clicked.connect(self.cancel_changes)
         
+        self.enable_connections()
         self.setLayout(layout)
     
+    def reset(self):
+        self.dynamic_fields_initiated = False
+        self.disable_connections()
+        self.delete_current_layout()
+        self.setup()
+    
+    def enable_connections(self):
+        self.enumerate_dynamic_fields(lambda field: field.enable_connection())
+    
+    def disable_connections(self):
+        self.enumerate_dynamic_fields(lambda field: field.disable_connection())
+    
+    def enumerate_dynamic_fields(self, callback):
+        for child in enumerate(self.children()):
+            if isinstance(child, EditScriptActionField):
+                callback(child)
+    
+    def fill_values(self):
+        if not self.dynamic_fields_initiated:
+            self.dynamic_fields_initiated = True
+            
+            fields = self.delegate.build_dynamic_fields()
+            
+            for field in fields:
+                self.layout.insertWidget(self.layout_dynamic_fields_start_index, field)
+    
     def save_changes(self):
-        pass
+        self.delegate.save()
     
     def cancel_changes(self):
-        pass
+        self.delegate.close()
+    
+    def delete_current_layout(self):
+        if self.layout is not None:
+            while self.layout.count():
+                item = self.layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.deleteLayout(item.layout())
+            sip.delete(self.layout)

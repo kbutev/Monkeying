@@ -1,8 +1,6 @@
 from typing import Protocol
-
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
-
 from OpenScriptView.EditScriptWidget import EditScriptWidget
 from OpenScriptView.RunScriptWidget import RunScriptWidget
 

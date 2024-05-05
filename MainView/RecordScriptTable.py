@@ -42,6 +42,8 @@ class RecordScriptTable(QTableWidget):
     
     def update_data(self):
         if self.data_source is not None:
+            current_selection = self.currentIndex().row()
+            
             self.setRowCount(self.data_source.count())
             
             for row in range(0, self.data_source.count()):
@@ -49,4 +51,5 @@ class RecordScriptTable(QTableWidget):
                     self.setItem(row, column, self.data_source.item(column, row))
             
             if self.data_source.count() > 0:
-                self.selectRow(0)
+                new_index = current_selection if current_selection < self.data_source.count() else self.data_source.count() - 1
+                self.selectRow(new_index)

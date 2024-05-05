@@ -1,68 +1,68 @@
 from Model.InputEventType import InputEventType
 from Model.Point import Point
 
+ENTRY_TIME = "t"
+ENTRY_TYPE = "e"
+ENTRY_KEYSTROKE = "v"
+ENTRY_POINT_X = "x"
+ENTRY_POINT_Y = "y"
+ENTRY_POINTS = "points"
+
+POINT_NAME_GENERIC = '0'
+POINT_NAME_SCROLL = '1'
 
 class JSONInputEvent:
-    ENTRY_TIME = "t"
-    ENTRY_TYPE = "e"
-    ENTRY_KEYSTROKE = "v"
-    ENTRY_POINT_X = "x"
-    ENTRY_POINT_Y = "y"
-    ENTRY_POINTS = "points"
+    values: dict
     
-    POINT_NAME_GENERIC = '0'
-    POINT_NAME_SCROLL = '1'
-    
-    values = {}
-    
-    def __init__(self, values = {}):
+    def __init__(self, values = None):
         if isinstance(values, dict):
-            self.values = values
-        elif values is JSONInputEvent:
-            self.values = values.values
+            self.values = values.copy()
+        elif isinstance(values, JSONInputEvent):
+            self.values = values.values.copy()
         else:
-            assert False
+            self.values = dict()
     
-    def get_time(self) -> float:
-        return float(self.values[JSONInputEvent.ENTRY_TIME])
+    def time(self) -> float:
+        return float(self.values[ENTRY_TIME])
     
     def set_time(self, time: float):
-        self.values[JSONInputEvent.ENTRY_TIME] = str(time)
+        self.values[ENTRY_TIME] = str(time)
     
-    def get_type(self) -> InputEventType:
-        name = self.values[JSONInputEvent.ENTRY_TYPE]
+    def type(self) -> InputEventType:
+        name = self.values[ENTRY_TYPE]
         return InputEventType(name)
     
     def set_type(self, type: InputEventType):
-        self.values[JSONInputEvent.ENTRY_TYPE] = str(type)
+        self.values[ENTRY_TYPE] = str(type)
     
-    def get_keystroke(self) -> str:
-        return self.values[JSONInputEvent.ENTRY_KEYSTROKE]
+    def keystroke(self) -> str:
+        return self.values[ENTRY_KEYSTROKE]
     
     def set_keystroke(self, key: str):
-        self.values[JSONInputEvent.ENTRY_KEYSTROKE] = str(key)
+        self.values[ENTRY_KEYSTROKE] = str(key)
     
-    def get_point(self) -> Point:
-        return Point(float(self.values[JSONInputEvent.ENTRY_POINT_X]), float(self.values[JSONInputEvent.ENTRY_POINT_Y]))
+    def point(self) -> Point:
+        if ENTRY_POINT_X not in self.values or ENTRY_POINT_Y not in self.values: return Point(0, 0)
+        
+        return Point(float(self.values[ENTRY_POINT_X]), float(self.values[ENTRY_POINT_Y]))
     
     def set_point(self, point: Point):
-        self.values[JSONInputEvent.ENTRY_POINT_X] = str(point.x)
-        self.values[JSONInputEvent.ENTRY_POINT_Y] = str(point.y)
+        self.values[ENTRY_POINT_X] = str(point.x)
+        self.values[ENTRY_POINT_Y] = str(point.y)
     
-    def get_named_point(self, name: str) -> Point:
-        if JSONInputEvent.ENTRY_POINTS in self.values:
-            point_values = self.values[JSONInputEvent.ENTRY_POINTS]
+    def named_point(self, name: str) -> Point:
+        if ENTRY_POINTS in self.values:
+            point_values = self.values[ENTRY_POINTS]
             
             if name in point_values:
                 point = point_values[name]
-                return Point(float(point[JSONInputEvent.ENTRY_POINT_X]), float(point[JSONInputEvent.ENTRY_POINT_Y]))
+                return Point(float(point[ENTRY_POINT_X]), float(point[ENTRY_POINT_Y]))
         
-        assert False
         return Point(0, 0)
     
     def set_named_point(self, name: str, point: Point):
-        if JSONInputEvent.ENTRY_POINTS not in self.values:
-            self.values[JSONInputEvent.ENTRY_POINTS] = {}
+        if ENTRY_POINTS not in self.values:
+            self.values[ENTRY_POINTS] = {}
         
-        point_values = self.values[JSONInputEvent.ENTRY_POINTS]
-        point_values[name] = {JSONInputEvent.ENTRY_POINT_X: str(point.x), JSONInputEvent.ENTRY_POINT_Y: str(point.y)}
+        point_values = self.values[ENTRY_POINTS]
+        point_values[name] = {ENTRY_POINT_X: str(point.x), ENTRY_POINT_Y: str(point.y)}

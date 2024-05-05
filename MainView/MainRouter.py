@@ -2,11 +2,11 @@ from typing import Protocol
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
+
+from MainView.MainWidget import MainWidget
 from OpenScriptView.OpenScriptRouter import OpenScriptRouter
 from MainView.ShowScriptsPresenter import ShowScriptsPresenter
 from MainView.RecordScriptPresenter import RecordScriptPresenter
-from MainView import MainWidget
-from OpenScriptView.OpenScriptWidget import OpenScriptWidget
 from Service.PickFileBrowser import PickFileBrowserProtocol, PickFileBrowser
 
 
@@ -22,16 +22,16 @@ class MainRouter(Protocol):
     def __init__(self):
         pass
     
-    def setup(self, widget):
-        self.widget = widget
+    def setup(self):
+        self.widget = MainWidget()
         self.widget.scripts_widget.delegate = self.show_scripts_presenter
         self.widget.scripts_widget.router = self
         self.widget.rec_widget.delegate = self.rec_presenter
         self.widget.rec_widget.router = self
         self.widget.delegate = self
-        self.show_scripts_presenter.widget = widget.scripts_widget
+        self.show_scripts_presenter.widget = self.widget.scripts_widget
         self.show_scripts_presenter.router = self
-        self.rec_presenter.widget = widget.rec_widget
+        self.rec_presenter.widget = self.widget.rec_widget
         self.rec_presenter.router = self
         
         self.show_scripts_presenter.start()
@@ -48,11 +48,10 @@ class MainRouter(Protocol):
         window.setWindowFlags(window.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
         layout = QVBoxLayout()
         
-        open_script_widget = OpenScriptWidget()
         router = OpenScriptRouter(item)
-        router.setup(open_script_widget)
+        router.setup()
         
-        window.closeEvent = open_script_widget.closeEvent
+        window.closeEvent = router.widget.closeEvent
         layout.addWidget(router.widget)
         window.setLayout(layout)
         window.exec()

@@ -2,38 +2,58 @@ from typing import Protocol
 from Model.InputEvent import InputEventDescription, InputEvent, KeystrokeEvent, MouseMoveEvent, MouseClickEvent, \
     MouseScrollEvent
 from Model.InputEventType import InputEventType
-from Model.JSONInputEvent import JSONInputEvent
-from pynput.mouse import Button as MouseKey
+from Model.JSONInputEvent import JSONInputEvent, POINT_NAME_GENERIC, POINT_NAME_SCROLL
 
 
 class EventActionParserProtocol(Protocol):
-    def parse(self, event) -> InputEvent: pass
+    def parse_json(self, json) -> InputEvent: pass
+    def parse_input_event(self, input_event: InputEvent) -> JSONInputEvent: pass
 
 class EventActionParser(EventActionParserProtocol):
     
-    def parse(self, event) -> InputEvent:
-        if isinstance(event, dict):
-            event = JSONInputEvent(event)
+    def parse_json(self, json) -> InputEvent:
+        if isinstance(json, dict):
+            event = JSONInputEvent(json)
+        else:
+            event = json
         
-        event_type = InputEventType(event.get_type())
+        event_type = InputEventType(event.type())
         
         match event_type:
             case InputEventType.KEYBOARD_PRESS:
-                result = KeystrokeEvent(True, event.get_keystroke())
+                result = KeystrokeEvent(True, event.keystroke())
             case InputEventType.KEYBOARD_RELEASE:
-                result = KeystrokeEvent(False, event.get_keystroke())
+                result = KeystrokeEvent(False, event.keystroke())
             case InputEventType.MOUSE_MOVE:
-                result = MouseMoveEvent(event.get_point())
+                result = MouseMoveEvent(event.point())
             case InputEventType.MOUSE_PRESS:
-                result = MouseClickEvent(True, event.get_keystroke(), event.get_point())
+                result = MouseClickEvent(True, event.keystroke(), event.point())
             case InputEventType.MOUSE_RELEASE:
-                result = MouseClickEvent(False, event.get_keystroke(), event.get_point())
+                result = MouseClickEvent(False, event.keystroke(), event.point())
             case InputEventType.MOUSE_SCROLL:
-                result = MouseScrollEvent(event.get_named_point(JSONInputEvent.POINT_NAME_GENERIC), event.get_named_point(JSONInputEvent.POINT_NAME_SCROLL))
+                result = MouseScrollEvent(event.named_point(POINT_NAME_GENERIC), event.named_point(POINT_NAME_SCROLL))
             case _:
                 assert False
         
-        result.set_time(float(event.get_time()))
+        result.set_time(float(event.time()))
+        return result
+    
+    def parse_input_event(self, input_event: InputEvent) -> JSONInputEvent:
+        result = JSONInputEvent()
+        result.set_time(input_event.time())
+        result.set_type(input_event.event_type())
+        
+        if isinstance(input_event, KeystrokeEvent):
+            result.set_keystroke(input_event.key_as_string())
+        elif isinstance(input_event, MouseClickEvent):
+            result.set_keystroke(input_event.key_as_string())
+            result.set_point(input_event.point)
+        elif isinstance(input_event, MouseMoveEvent):
+            result.set_point(input_event.point)
+        elif isinstance(input_event, MouseScrollEvent):
+            result.set_named_point(POINT_NAME_GENERIC, input_event.point)
+            result.set_named_point(POINT_NAME_SCROLL, input_event.scroll_dt)
+        
         return result
 
 class EventActionToStringParserGrouping:
@@ -54,12 +74,12 @@ class EventActionToStringParser(EventActionToStringParserProtocol):
     
     def parse(self, event) -> InputEventDescription:
         if not isinstance(event, InputEvent):
-            event = self.inner_parser.parse(event)
+            event = self.inner_parser.parse_json(event)
         
         result = InputEventDescription()
         
         input_event: InputEvent = event
-        result.time = "{:.1f}".format(input_event.get_time())
+        result.time = "{:.3f}".format(input_event.time())
         result.type = input_event.event_type().name
         result.value = input_event.value_as_string()
         
@@ -71,7 +91,7 @@ class EventActionToStringParser(EventActionToStringParserProtocol):
         group_enabled = group_options is not None
         
         for event in events:
-            new_event = self.inner_parser.parse(event)
+            new_event = self.inner_parser.parse_json(event)
             
             # Group logic
             if group_enabled:

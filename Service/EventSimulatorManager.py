@@ -38,10 +38,12 @@ class EventSimulatorWorker(QThread):
         while self.is_running() and len(self.events) > 0:
             next_event = self.events[0]
             
-            if next_event.time <= self.elapsed_time():
+            if next_event.time() <= self.elapsed_time():
                 self.simulate_event(next_event)
                 self.events.pop(0)
-                self.increment_current_event_index()
+                
+                if len(self.events) > 0:
+                    self.increment_current_event_index()
             else:
                 self.msleep(self.wait_interval)
         
@@ -111,7 +113,7 @@ class EventSimulatorManager:
         print('EventSimulatorManager start')
         
         self.is_running = True
-        data = list(map(lambda event: self.parser.parse(event), self.storage.data.copy()))
+        data = list(map(lambda event: self.parser.parse_json(event), self.storage.data.copy()))
         worker = EventSimulatorWorker(data)
         worker.print_callback = self.print_callback
         worker.delegate = self
@@ -139,9 +141,9 @@ class EventSimulatorManager:
         return self.worker.current_event_index()
     
     def progress_fraction(self) -> float:
-        index = self.current_event_index()
+        index = self.current_event_index() + 1
         length = len(self.storage.data)
-        return float(index) / float(length)
+        return float(index) / float(length) if length > 0 else 0
     
     def print(self, message):
         if self.print_callback is not None:

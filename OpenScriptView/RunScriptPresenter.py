@@ -102,11 +102,11 @@ class RunScriptPresenter(Presenter):
         assert self.is_running
         
         print('RunScriptPresenter stop script')
+        self.update_events()
         
         self.is_running = False
 
         self.update_timer.stop()
-        self.update_events()
         
         if sender is not self.simulator:
             self.simulator.cancel()
@@ -137,4 +137,7 @@ class RunScriptPresenter(Presenter):
         pass
     
     def update_events(self):
-        self.widget.update_progress(self.simulator.current_event_index(), int(self.simulator.progress_fraction() * 100.0))
+        index = self.simulator.current_event_index()
+        progress = int(self.simulator.progress_fraction() * 100.0)
+        #print(f'RunScriptPresenter update_events index={index} progress={progress}')
+        self.widget.update_progress(index, progress)

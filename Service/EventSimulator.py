@@ -44,9 +44,9 @@ class MouseEventSimulator:
         self.mouse.release(key)
     
     def scroll(self, position, offset):
-        self.print(f"MouseEventSimulator: scroll by ({offset[0]},{offset[1]}) @ ({position[0]},{position[1]})")
-        self.mouse.move(position[0], position[1])
-        self.mouse.scroll(offset[0], offset[1]) # TODO: not working ATM
+        self.print(f"MouseEventSimulator: scroll by ({offset.x},{offset.y}) @ ({position.x},{position.y})")
+        self.mouse.move(position.x, position.y)
+        self.mouse.scroll(offset.x, offset.y) # TODO: not working ATM
     
     def print(self, string):
         if self.print_callback is not None:
