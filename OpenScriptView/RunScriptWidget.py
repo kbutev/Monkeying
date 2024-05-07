@@ -6,6 +6,8 @@ from OpenScriptView.RunScriptTable import RunScriptTable, RunScriptTableDataSour
 
 class RunScriptWidgetProtocol(Protocol):
     def run_script(self, sender): pass
+    def resume_script(self, sender): pass
+    def pause_script(self, sender): pass
     def stop_script(self, sender): pass
     def set_events_data(self, data): pass
     def update_progress(self, index, percentage: int): pass
@@ -85,23 +87,31 @@ class RunScriptWidget(QWidget):
         else:
             assert sender is self.delegate  # Unrecognized sender
     
-    def pause_script(self):
+    def pause_script(self, sender):
         self.setup_resume_script()
-        self.delegate.pause_script(self)
+        
+        if sender is self:
+            if self.delegate is not None: self.delegate.pause_script(sender=self)
+        else:
+            assert sender is self.delegate  # Unrecognized sender
     
-    def resume_script(self):
+    def resume_script(self, sender):
         self.setup_pause_script()
-        self.delegate.resume_script(self)
+        
+        if sender is self:
+            if self.delegate is not None: self.delegate.resume_script(sender=self)
+        else:
+            assert sender is self.delegate  # Unrecognized sender
     
     def setup_pause_script(self):
         self.pause_button.setText('Pause')
         self.pause_button.disconnect()
-        self.pause_button.clicked.connect(self.pause_script)
+        self.pause_button.clicked.connect(lambda: self.pause_script(sender=self))
     
     def setup_resume_script(self):
         self.pause_button.setText('Resume')
         self.pause_button.disconnect()
-        self.pause_button.clicked.connect(self.resume_script)
+        self.pause_button.clicked.connect(lambda: self.resume_script(sender=self))
     
     def set_events_data(self, data):
         self.data_source.data = data

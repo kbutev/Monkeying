@@ -27,23 +27,23 @@ class Timer:
         self.bonus_elapsed_time = 0
     
     def pause(self):
-        assert self.is_running
+        assert self.running
         assert not self.paused
         self.bonus_elapsed_time = self.elapsed_time()
         self.paused = True
 
     def resume(self):
-        assert self.is_running
+        assert self.running
         assert self.paused
         self.paused = False
         self.start_time = time.time()
     
     def stop(self):
-        assert self.is_running
+        assert self.running
         self.paused = False
         self.running = False
         self.bonus_elapsed_time = self.elapsed_time()
     
     def reset(self):
-        assert not self.is_running
+        assert not self.running
         self.bonus_elapsed_time = 0

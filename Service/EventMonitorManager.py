@@ -72,7 +72,7 @@ class EventMonitorWorker(QThread):
 class EventMonitorManager:
     storage: EventStorage
     
-    is_running = False
+    running = False
     worker: EventMonitorWorker
     
     filter_keys = []
@@ -80,12 +80,15 @@ class EventMonitorManager:
     def __init__(self, storage):
         self.storage = storage
     
+    def is_running(self) -> bool:
+        return self.running
+    
     def start(self):
-        assert not self.is_running
+        assert not self.running
         
         print('EventMonitorManager start')
         
-        self.is_running = True
+        self.running = True
         worker = EventMonitorWorker(self.storage)
         worker.filter_keys = self.filter_keys
         worker.finished.connect(self.on_stop)
@@ -93,11 +96,11 @@ class EventMonitorManager:
         worker.start()
     
     def stop(self):
-        assert self.is_running
+        assert self.running
         print('EventMonitorManager stop')
         self.worker.stop()
     
     def on_stop(self):
-        assert self.is_running
+        assert self.running
         print('EventMonitorManager on stop')
-        self.is_running = False
+        self.running = False

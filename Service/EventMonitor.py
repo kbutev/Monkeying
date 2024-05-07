@@ -16,7 +16,7 @@ from Model.Point import Point
 # Records keyboard strokes
 class KeyboardEventMonitor(QObject):
     listener: KeyboardListener = None
-    is_running = False
+    running = False
     
     on_press_callback = None
     on_release_callback = None
@@ -28,6 +28,9 @@ class KeyboardEventMonitor(QObject):
         super(KeyboardEventMonitor, self).__init__()
         self.signal_main.connect(self.emit_event_on_main)
     
+    def is_running(self) -> bool:
+        return self.running
+    
     def setup(self, on_press_callback, on_release_callback):
         self.reset()
         self.on_press_callback = on_press_callback
@@ -35,28 +38,28 @@ class KeyboardEventMonitor(QObject):
     
     def start(self):
         assert self.listener is not None
-        assert not self.is_running
+        assert not self.running
         
         self.print("EventMonitor start")
         
-        self.is_running = True
+        self.running = True
         
         self.listener.start()
     
     def stop(self):
-        assert self.is_running
+        assert self.running
         
         self.print("stop")
         
-        self.is_running = False
+        self.running = False
         self.listener.stop()
         self.listener = None
     
     def reset(self):
-        assert not self.is_running
+        assert not self.running
         
         self.print("reset monitor")
-        self.is_running = False
+        self.running = False
         
         if self.listener is not None:
             self.listener.stop()
@@ -64,7 +67,7 @@ class KeyboardEventMonitor(QObject):
         self.listener = KeyboardListener(on_press=self.on_press, on_release=self.on_release)
     
     def join(self):
-        assert self.is_running
+        assert self.running
 
         self.print("join")
         
@@ -72,20 +75,20 @@ class KeyboardEventMonitor(QObject):
         self.listener.join()
     
     def on_press(self, key):
-        if not self.is_running: return False
+        if not self.running: return False
         self.print(f"{key} pressed")
         
         self.signal_main.emit(KeystrokeEvent(KeyPressType.PRESS, key))
         
-        return self.is_running
+        return self.running
     
     def on_release(self, key):
-        if not self.is_running: return False
+        if not self.running: return False
         self.print(f"{key} released")
         
         self.signal_main.emit(KeystrokeEvent(KeyPressType.RELEASE, key))
         
-        return self.is_running
+        return self.running
     
     def emit_event_on_main(self, value):
         if value.press == KeyPressType.PRESS:
@@ -100,7 +103,7 @@ class KeyboardEventMonitor(QObject):
 # Record mouse movement
 class MouseEventMonitor(QObject):
     listener: mouse.Listener = None
-    is_running = False
+    running = False
     
     on_move_callback = None
     on_press_callback = None
@@ -118,6 +121,9 @@ class MouseEventMonitor(QObject):
         self.signal_main_click.connect(self.emit_event_on_main_click)
         self.signal_main_scroll.connect(self.emit_event_on_main_scroll)
     
+    def is_running(self) -> bool:
+        return self.running
+    
     def setup(self, on_move_callback, on_press_callback, on_release_callback, on_scroll_callback):
         self.reset()
         self.on_move_callback = on_move_callback
@@ -127,25 +133,25 @@ class MouseEventMonitor(QObject):
     
     def start(self):
         assert self.listener is not None
-        assert not self.is_running
+        assert not self.running
 
         self.print("start")
 
-        self.is_running = True
+        self.running = True
 
         self.listener.start()
     
     def stop(self):
-        assert self.is_running
+        assert self.running
         
         self.print("stop")
         
-        self.is_running = False
+        self.running = False
         self.listener.stop()
         self.listener = None
 
     def join(self):
-        assert self.is_running
+        assert self.running
         
         self.print("join")
         
@@ -153,15 +159,15 @@ class MouseEventMonitor(QObject):
         self.listener.join()
     
     def on_move(self, x, y) -> bool:
-        if not self.is_running: return False
+        if not self.running: return False
         self.print(f"({x}, {y}) moved")
         
         self.signal_main_move.emit(MouseMoveEvent(Point(x, y)))
         
-        return self.is_running
+        return self.running
     
     def on_click(self, x, y, key, is_pressed) -> bool:
-        if not self.is_running: return False
+        if not self.running: return False
         
         press = KeyPressType.PRESS if is_pressed else KeyPressType.RELEASE
         
@@ -169,18 +175,18 @@ class MouseEventMonitor(QObject):
         
         self.signal_main_click.emit(MouseClickEvent(press, key, Point(x, y)))
         
-        return self.is_running
+        return self.running
     
     def on_scroll(self, x, y, dx, dy) -> bool:
-        if not self.is_running: return False
+        if not self.running: return False
         self.print(f"scrolled by ({x}, {y}) by ({dx}, {dy})")
         
         self.signal_main_scroll.emit(MouseScrollEvent(Point(x, y), Point(dx, dy)))
         
-        return self.is_running
+        return self.running
     
     def reset(self):
-        assert not self.is_running
+        assert not self.running
         
         self.print("reset monitor")
         

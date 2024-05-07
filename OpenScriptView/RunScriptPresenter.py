@@ -27,7 +27,7 @@ class RunScriptPresenter(Presenter):
     storage_data = []
     script: str
     
-    is_running = False
+    running = False
     
     simulator: EventSimulatorManager = None
     keyboard_monitor = KeyboardEventMonitor()
@@ -64,29 +64,29 @@ class RunScriptPresenter(Presenter):
         self.widget.update_progress(0, 0)
     
     def stop(self):
-        if self.keyboard_monitor.is_running:
+        if self.keyboard_monitor.is_running():
             self.keyboard_monitor.stop()
         
-        if self.simulator is not None and self.simulator.is_running:
+        if self.simulator is not None and self.simulator.is_running():
             self.simulator.cancel()
         
-        self.is_running = False
+        self.running = False
         
         self.update_timer.stop()
     
     def is_script_active(self) -> bool:
-        return self.is_running
+        return self.running
     
     def can_run_script(self) -> bool:
-        return not self.is_running
+        return not self.running
     
     def run_script(self, sender):
         assert self.widget is not None
-        assert not self.is_running
+        assert not self.running
         
         print('RunScriptPresenter run script')
         
-        self.is_running = True
+        self.running = True
         storage = EventStorage()
         storage.data = self.storage_data
         self.simulator = EventSimulatorManager(storage)
@@ -99,13 +99,13 @@ class RunScriptPresenter(Presenter):
             self.widget.run_script(sender=self)
     
     def stop_script(self, sender):
-        assert self.is_running
+        assert self.running
         
         print('RunScriptPresenter stop script')
         self.update_events()
         
-        self.is_running = False
-
+        self.running = False
+        
         self.update_timer.stop()
         
         if sender is not self.simulator:
@@ -118,8 +118,20 @@ class RunScriptPresenter(Presenter):
     def pause_script(self, sender):
         self.simulator.pause_script(sender)
         
+        if sender is not self.widget and self.widget is not None:
+            # Always set sender=self, as the widget does not know about the simulator
+            self.widget.pause_script(sender=self)
+        else:
+            assert sender is self.widget
+    
     def resume_script(self, sender):
         self.simulator.resume_script(sender)
+        
+        if sender is not self.widget and self.widget is not None:
+            # Always set sender=self, as the widget does not know about the simulator
+            self.widget.resume_script(sender=self)
+        else:
+            assert sender is self.widget
     
     def enable_tabs(self, value):
         self.router.enable_tabs(value)
@@ -133,8 +145,11 @@ class RunScriptPresenter(Presenter):
         self.hotkey_click_time = time.time()
         
         if event.key == self.trigger_key:
-            if self.is_running:
-                self.stop_script(sender=self)
+            if self.running:
+                if self.simulator.is_paused():
+                    self.resume_script(sender=self)
+                else:
+                    self.pause_script(sender=self)
             else:
                 print('RunScriptPresenter cancel script')
                 self.run_script(sender=self)

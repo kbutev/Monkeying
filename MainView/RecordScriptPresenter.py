@@ -24,7 +24,7 @@ class RecordScriptPresenter(Presenter):
     event_monitor = EventMonitorManager(storage)
     keyboard_monitor = KeyboardEventMonitor()
     
-    is_running = False
+    running = False
     
     file_format = '.json'
     write_path = './commands.json'
@@ -50,6 +50,9 @@ class RecordScriptPresenter(Presenter):
         self.update_timer.setInterval(100)
         self.update_timer.timeout.connect(self.update_events)
     
+    def is_running(self) -> bool:
+        return self.running
+    
     def start(self):
         self.keyboard_monitor = KeyboardEventMonitor()
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
@@ -57,10 +60,10 @@ class RecordScriptPresenter(Presenter):
         self.event_monitor.filter_keys.append(self.trigger_key)
     
     def stop(self):
-        if self.keyboard_monitor.is_running:
+        if self.keyboard_monitor.is_running():
             self.keyboard_monitor.stop()
         
-        if self.is_running:
+        if self.is_running():
             self.stop_recording(sender=self)
         
         self.event_monitor.filter_keys.remove(self.trigger_key)
@@ -69,12 +72,12 @@ class RecordScriptPresenter(Presenter):
         self.router.enable_tabs(value)
     
     def begin_recording(self, sender):
-        assert not self.is_running
+        assert not self.running
         assert self.widget is not None
         
         print('RecordScriptPresenter begin')
         
-        self.is_running = True
+        self.running = True
         self.storage.clear()
         self.event_monitor.start()
         self.update_events()
@@ -86,12 +89,12 @@ class RecordScriptPresenter(Presenter):
             self.widget.begin_recording(sender=self)
     
     def stop_recording(self, sender):
-        assert self.is_running
+        assert self.running
         assert self.widget is not None
         
         print('RecordScriptPresenter stop recording')
         
-        self.is_running = False
+        self.running = False
         self.event_monitor.stop()
         self.update_timer.stop()
         
@@ -121,7 +124,7 @@ class RecordScriptPresenter(Presenter):
         if event.key == self.trigger_key:
             self.hotkey_click_time = time.time()
             
-            if self.is_running:
+            if self.is_running():
                 self.stop_recording(sender=self)
             else:
                 self.begin_recording(sender=self)
