@@ -15,6 +15,8 @@ class RunScriptWidgetDelegate(Protocol):
     def can_run_script(self) -> bool: return False
     def run_script(self, sender): pass
     def stop_script(self, sender): pass
+    def pause_script(self, sender): pass
+    def resume_script(self, sender): pass
     def enable_tabs(self, value): pass
 
 class RunScriptWidget(QWidget):
@@ -25,6 +27,7 @@ class RunScriptWidget(QWidget):
     
     progress_bar: QProgressBar
     state_button: QPushButton
+    pause_button: QPushButton
     
     def __init__(self, parent=None):
         super(RunScriptWidget, self).__init__(parent)
@@ -45,6 +48,10 @@ class RunScriptWidget(QWidget):
         layout.addWidget(self.state_button)
         self.state_button.clicked.connect(lambda: self.run_script(sender=self))
         
+        self.pause_button = QPushButton('Pause')
+        layout.addWidget(self.pause_button)
+        self.pause_button.setEnabled(False)
+        
         self.setLayout(layout)
     
     def run_script(self, sender):
@@ -52,6 +59,9 @@ class RunScriptWidget(QWidget):
         self.state_button.clicked.disconnect()
         self.state_button.clicked.connect(lambda: self.stop_script(sender=self))
         self.progress_bar.setValue(0)
+        
+        self.setup_pause_script()
+        self.pause_button.setEnabled(True)
         
         if self.delegate is not None: self.delegate.enable_tabs(False)
         
@@ -65,12 +75,33 @@ class RunScriptWidget(QWidget):
         self.state_button.clicked.disconnect()
         self.state_button.clicked.connect(lambda: self.run_script(sender=self))
         
+        self.setup_pause_script()
+        self.pause_button.setEnabled(False)
+        
         if self.delegate is not None: self.delegate.enable_tabs(True)
         
         if sender is self:
             if self.delegate is not None: self.delegate.stop_script(sender=self)
         else:
             assert sender is self.delegate  # Unrecognized sender
+    
+    def pause_script(self):
+        self.setup_resume_script()
+        self.delegate.pause_script(self)
+    
+    def resume_script(self):
+        self.setup_pause_script()
+        self.delegate.resume_script(self)
+    
+    def setup_pause_script(self):
+        self.pause_button.setText('Pause')
+        self.pause_button.disconnect()
+        self.pause_button.clicked.connect(self.pause_script)
+    
+    def setup_resume_script(self):
+        self.pause_button.setText('Resume')
+        self.pause_button.disconnect()
+        self.pause_button.clicked.connect(self.resume_script)
     
     def set_events_data(self, data):
         self.data_source.data = data

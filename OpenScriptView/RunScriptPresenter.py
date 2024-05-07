@@ -115,6 +115,12 @@ class RunScriptPresenter(Presenter):
             # Always set sender=self, as the widget does not know about the simulator
             self.widget.stop_script(sender=self)
     
+    def pause_script(self, sender):
+        self.simulator.pause_script(sender)
+        
+    def resume_script(self, sender):
+        self.simulator.resume_script(sender)
+    
     def enable_tabs(self, value):
         self.router.enable_tabs(value)
     

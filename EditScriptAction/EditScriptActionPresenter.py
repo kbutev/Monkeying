@@ -60,7 +60,7 @@ class EditScriptActionPresenter(Presenter):
         
         default_values = JSONInputEvent()
         default_values.set_type(value)
-        default_values.set_time(0)
+        default_values.set_time(self.input_event.time())
         default_values.set_keystroke('x' if default_values.type().is_keyboard() else MouseKey.left.name)
         
         self.input_event = self.action_parser.parse_json(default_values)
