@@ -11,6 +11,7 @@ from Service.EventSimulatorManager import EventSimulatorManager
 from OpenScriptView.RunScriptWidget import RunScriptWidgetProtocol
 from pynput.keyboard import Key as KButton
 
+from Service.SettingsManager import SettingsManager
 from Utilities import Path
 
 
@@ -34,7 +35,8 @@ class RunScriptPresenter(Presenter):
     
     event_parser: EventActionToStringParserProtocol = EventActionToStringParser()
     
-    trigger_key = KButton.esc
+    play_trigger_key = None
+    pause_trigger_key = None
     
     update_timer: QTimer
     
@@ -56,6 +58,10 @@ class RunScriptPresenter(Presenter):
         self.update_timer.timeout.connect(self.update_events)
     
     def start(self):
+        settings = SettingsManager()
+        self.play_trigger_key = settings.play_hotkey()
+        self.pause_trigger_key = settings.pause_hotkey()
+        
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
         
@@ -144,15 +150,16 @@ class RunScriptPresenter(Presenter):
         
         self.hotkey_click_time = time.time()
         
-        if event.key == self.trigger_key:
+        if event.key == self.play_trigger_key:
             if self.running:
-                if self.simulator.is_paused():
-                    self.resume_script(sender=self)
-                else:
-                    self.pause_script(sender=self)
+                self.stop_script(sender=self)
             else:
-                print('RunScriptPresenter cancel script')
                 self.run_script(sender=self)
+        elif event.key == self.pause_trigger_key and self.running:
+            if self.simulator.is_paused():
+                self.resume_script(sender=self)
+            else:
+                self.pause_script(sender=self)
     
     def noop_on_key_press(self, key):
         pass

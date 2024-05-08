@@ -10,6 +10,7 @@ from Service.EventMonitorManager import EventMonitorManager
 from MainView.RecordScriptWidget import RecordScriptWidgetProtocol
 from pynput.keyboard import Key as KButton
 from Service.EventStorage import EventStorage
+from Service.SettingsManager import SettingsManager
 
 
 class RecordScriptPresenterRouter(Protocol):
@@ -29,7 +30,7 @@ class RecordScriptPresenter(Presenter):
     file_format = '.json'
     write_path = './commands.json'
     
-    trigger_key = KButton.esc
+    trigger_key = None
     
     events_data = []
     
@@ -54,9 +55,12 @@ class RecordScriptPresenter(Presenter):
         return self.running
     
     def start(self):
+        self.trigger_key = SettingsManager().record_hotkey()
+        
         self.keyboard_monitor = KeyboardEventMonitor()
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
+        
         self.event_monitor.filter_keys.append(self.trigger_key)
     
     def stop(self):
@@ -66,7 +70,8 @@ class RecordScriptPresenter(Presenter):
         if self.is_running():
             self.stop_recording(sender=self)
         
-        self.event_monitor.filter_keys.remove(self.trigger_key)
+        if self.trigger_key in self.event_monitor.filter_keys:
+            self.event_monitor.filter_keys.remove(self.trigger_key)
     
     def enable_tabs(self, value):
         self.router.enable_tabs(value)

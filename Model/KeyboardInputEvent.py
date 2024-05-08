@@ -3,6 +3,7 @@ from pynput.keyboard import Key as KeyboardKey
 from pynput.keyboard import KeyCode as KeyboardKeyCode
 from Model.InputEventType import InputEventType
 from Model.KeyPressType import KeyPressType
+from Parser.KeyboardKeyParser import key_to_string, string_to_key
 
 FLOAT_ROUND_DECIMALS = 3
 
@@ -23,12 +24,7 @@ class KeystrokeEvent(InputEvent):
         self.timestamp = round(value, FLOAT_ROUND_DECIMALS)
     
     def key_as_string(self) -> str:
-        if isinstance(self.key, KeyboardKeyCode):
-            return self.key.char
-        elif isinstance(self.key, KeyboardKey):
-            return str(self.key.name)
-        else:
-            assert False
+        return key_to_string(self.key)
     
     def event_type(self) -> InputEventType:
         match self.press:
@@ -43,12 +39,4 @@ class KeystrokeEvent(InputEvent):
         return f'{self.key}'
     
     def set_key(self, key):
-        if isinstance(key, KeyboardKey) or isinstance(key, KeyboardKeyCode):
-            self.key = key
-        elif isinstance(key, str):
-            if len(key) == 1:
-                self.key = KeyboardKeyCode.from_char(key)
-            else:
-                self.key = KeyboardKey[key]
-        else:
-            assert False
+        self.key = string_to_key(key)
