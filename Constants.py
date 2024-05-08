@@ -1,0 +1,3 @@
+
+SCRIPTS_DEFAULT_DIR = 'scripts'
+SCRIPT_FILE_FORMAT = 'json'

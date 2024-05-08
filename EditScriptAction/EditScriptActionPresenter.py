@@ -9,7 +9,6 @@ from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.JSONInputEvent import JSONInputEvent
 from Parser.EventActionParser import EventActionParserProtocol, EventActionParser
 from Presenter.Presenter import Presenter
-from pynput.mouse import Button as MouseKey
 
 
 class EditScriptActionPresenterRouter(Protocol):
@@ -26,10 +25,11 @@ class EditScriptActionPresenter(Presenter):
     field_builder: EditScriptActionFieldBuilderProtocol = EditScriptActionFieldBuilder()
     action_parser: EventActionParserProtocol = EventActionParser()
     
-    def __init__(self, event_index, input_event: InputEvent):
+    def __init__(self, context_script_path, event_index, input_event: InputEvent):
         super(EditScriptActionPresenter, self).__init__()
         self.event_index = event_index
         self.input_event = input_event
+        self.field_builder.context_script_path = context_script_path
     
     def start(self):
         self.fill_values()
@@ -59,9 +59,8 @@ class EditScriptActionPresenter(Presenter):
         self.widget.reset()
         
         default_values = JSONInputEvent()
-        default_values.set_type(value)
+        default_values.set_defaults(value)
         default_values.set_time(self.input_event.time())
-        default_values.set_keystroke('x' if default_values.type().is_keyboard() else MouseKey.left.name)
         
         self.input_event = self.action_parser.parse_json(default_values)
         

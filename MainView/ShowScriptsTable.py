@@ -1,9 +1,11 @@
 from PyQt5.QtWidgets import *
 
+from Constants import SCRIPT_FILE_FORMAT
+
 
 class ShowScriptsTableDataSource:
     data = []
-    file_format = 'json'
+    file_format = SCRIPT_FILE_FORMAT
     
     def count(self) -> int:
         return len(self.data)

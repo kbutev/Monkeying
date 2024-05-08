@@ -19,7 +19,8 @@ class EditScriptActionRouter(Protocol):
     
     def __init__(self, is_insert, event_index, input_event: InputEvent, edit_script_presenter):
         self.is_insert = is_insert
-        self.edit_action_presenter = EditScriptActionPresenter(event_index, input_event)
+        script_path = edit_script_presenter.script_path()
+        self.edit_action_presenter = EditScriptActionPresenter(script_path, event_index, input_event)
         self.edit_script_presenter = edit_script_presenter
     
     def setup(self, parent):

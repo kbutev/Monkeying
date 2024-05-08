@@ -3,14 +3,13 @@ from typing import Protocol
 
 from PyQt5.QtCore import QTimer
 
+from Constants import SCRIPTS_DEFAULT_DIR, SCRIPT_FILE_FORMAT
 from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventStorage import EventStorage
 from Service.EventSimulatorManager import EventSimulatorManager
 from OpenScriptView.RunScriptWidget import RunScriptWidgetProtocol
-from pynput.keyboard import Key as KButton
-
 from Service.SettingsManager import SettingsManager
 from Utilities import Path
 
@@ -22,8 +21,8 @@ class RunScriptPresenter(Presenter):
     widget: RunScriptWidgetProtocol = None
     router: RunScriptPresenterRouter = None
     
-    working_dir = 'scripts'
-    file_format = 'json'
+    working_dir = SCRIPTS_DEFAULT_DIR
+    file_format = SCRIPT_FILE_FORMAT
     
     storage_data = []
     script: str
@@ -48,7 +47,7 @@ class RunScriptPresenter(Presenter):
         super(RunScriptPresenter, self).__init__()
         
         storage = EventStorage()
-        storage.read_from_file(Path.combine(self.working_dir, script))
+        storage.read_from_file(Path.combine_paths(self.working_dir, script))
         self.storage_data = storage.data
         self.script = script
         
@@ -146,20 +145,28 @@ class RunScriptPresenter(Presenter):
         time_since_last_usage = time.time() - self.hotkey_click_time
         
         if time_since_last_usage < self.hotkey_suspend_interval:
+            print('RunScriptPresenter hotkey pass')
             return
         
-        self.hotkey_click_time = time.time()
-        
         if event.key == self.play_trigger_key:
+            print('RunScriptPresenter play hotkey triggered')
+            
             if self.running:
                 self.stop_script(sender=self)
             else:
                 self.run_script(sender=self)
         elif event.key == self.pause_trigger_key and self.running:
+            print('RunScriptPresenter pause hotkey triggered')
+            
             if self.simulator.is_paused():
                 self.resume_script(sender=self)
             else:
                 self.pause_script(sender=self)
+        else:
+            return
+        
+        # Update timer only when hotkey is used
+        self.hotkey_click_time = time.time()
     
     def noop_on_key_press(self, key):
         pass

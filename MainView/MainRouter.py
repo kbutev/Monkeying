@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
 from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresenter
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
+from Constants import SCRIPT_FILE_FORMAT
 from MainView.MainWidget import MainWidget
 from MainView.SettingsPresenter import SettingsPresenter
 from OpenScriptView.OpenScriptRouter import OpenScriptRouter
@@ -21,7 +22,7 @@ class MainRouter(Protocol):
     
     pick_file_browser: PickFileBrowserProtocol = PickFileBrowser()
     
-    script_file_format = 'json'
+    script_file_format = SCRIPT_FILE_FORMAT
     
     def __init__(self):
         pass

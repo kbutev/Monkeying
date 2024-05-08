@@ -1,5 +1,6 @@
 from typing import Protocol
 
+from Constants import SCRIPTS_DEFAULT_DIR, SCRIPT_FILE_FORMAT
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from OpenScriptView.EditScriptWidget import EditScriptWidgetProtocol
@@ -21,26 +22,27 @@ class EditScriptPresenter(Presenter):
     widget: EditScriptWidgetProtocol = None
     router: EditScriptPresenterRouter = None
     
-    working_dir = 'scripts'
-    file_format = 'json'
+    working_dir = SCRIPTS_DEFAULT_DIR
+    file_format = SCRIPT_FILE_FORMAT
     
     storage = EventStorage()
     events = []
     event_descriptions = []
-    script: str
-    script_path: Path
-
+    _script_path: Path
+    
     event_parser: EventActionParserProtocol = EventActionParser()
     event_string_parser: EventActionToStringParserProtocol = EventActionToStringParser()
     
     def __init__(self, script):
         super(EditScriptPresenter, self).__init__()
         
-        self.script_path = Path.combine(self.working_dir, script)
-        self.storage.read_from_file(self.script_path)
+        self._script_path = Path.combine_paths(self.working_dir, script)
+        self.storage.read_from_file(self._script_path)
         self.events = list(map(lambda event: self.event_parser.parse_json(event), self.storage.data))
         self.setup_event_descriptions()
-        self.script = script
+    
+    def script_path(self) -> Path:
+        return self._script_path
     
     def start(self):
         self.update_data()
@@ -65,7 +67,7 @@ class EditScriptPresenter(Presenter):
         
         self.storage.data = storage_data
         self.storage.update_modified_date()
-        self.storage.write_to_file(self.script_path)
+        self.storage.write_to_file(self._script_path)
     
     def insert_script_action(self, event_index):
         assert 0 <= event_index

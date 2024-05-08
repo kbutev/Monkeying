@@ -1,6 +1,4 @@
 from Model.InputEvent import InputEvent
-from pynput.keyboard import Key as KeyboardKey
-from pynput.keyboard import KeyCode as KeyboardKeyCode
 from Model.InputEventType import InputEventType
 from Model.KeyPressType import KeyPressType
 from Parser.KeyboardKeyParser import key_to_string, string_to_key

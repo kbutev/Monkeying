@@ -27,7 +27,7 @@ class KeyboardEventSimulator:
     def click(self, key):
         self.print(f"KeyboardEventSimulator: click {key}")
         self.keyboard.tap(key)
-
+    
     def press(self, key):
         self.print(f"KeyboardEventSimulator: press {key}")
         self.keyboard.press(key)

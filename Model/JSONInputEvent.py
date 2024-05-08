@@ -1,5 +1,7 @@
 from Model.InputEventType import InputEventType
 from Model.Point import Point
+from Utilities.Path import Path
+from pynput.mouse import Button as MouseKey
 
 ENTRY_TIME = "t"
 ENTRY_TYPE = "e"
@@ -7,6 +9,7 @@ ENTRY_KEYSTROKE = "v"
 ENTRY_POINT_X = "x"
 ENTRY_POINT_Y = "y"
 ENTRY_POINTS = "points"
+ENTRY_PATH = "path"
 
 POINT_NAME_GENERIC = '0'
 POINT_NAME_SCROLL = '1'
@@ -21,6 +24,11 @@ class JSONInputEvent:
             self.values = values.values.copy()
         else:
             self.values = dict()
+    
+    def set_defaults(self, type):
+        self.set_type(type)
+        self.set_keystroke('x' if self.type().is_keyboard() else MouseKey.left.name)
+        self.set_path('')
     
     def time(self) -> float:
         return float(self.values[ENTRY_TIME])
@@ -66,3 +74,14 @@ class JSONInputEvent:
         
         point_values = self.values[ENTRY_POINTS]
         point_values[name] = {ENTRY_POINT_X: str(point.x), ENTRY_POINT_Y: str(point.y)}
+    
+    def path(self) -> Path:
+        return Path(self.values[ENTRY_PATH])
+    
+    def set_path(self, value):
+        if isinstance(value, Path):
+            self.values[ENTRY_PATH] = value.absolute
+        elif isinstance(value, str):
+            self.values[ENTRY_PATH] = value
+        else:
+            assert False

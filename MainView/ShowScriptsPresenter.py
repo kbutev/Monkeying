@@ -1,21 +1,21 @@
 
-from os import listdir
-from os.path import isfile, join
 from typing import Protocol
 
+from Constants import SCRIPTS_DEFAULT_DIR, SCRIPT_FILE_FORMAT
 from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
+from Utilities import Path
 
 
 class ShowScriptsWidgetRouter(Protocol):
-    def open_script(self, item): pass
+    def open_script(self, parent, item): pass
 
 class ShowScriptsPresenter(Presenter):
     widget: ShowScriptsWidgetProtocol = None
     router: ShowScriptsWidgetRouter = None
     
-    working_dir = 'scripts'
-    file_format = 'json'
+    working_dir = SCRIPTS_DEFAULT_DIR
+    file_format = SCRIPT_FILE_FORMAT
     
     def __init__(self):
         super(ShowScriptsPresenter, self).__init__()
@@ -27,8 +27,7 @@ class ShowScriptsPresenter(Presenter):
         self.setup()
     
     def setup(self):
-        files_list = [f for f in listdir(self.working_dir) if isfile(join(self.working_dir, f))]
-        files_list = list(filter(lambda name: len(name) > len(self.file_format)+1 and name.endswith(f'.{self.file_format}'), files_list))
+        files_list = Path.directory_file_list(self.working_dir, self.file_format)
         
         print(f'command files found in working directory \'{self.working_dir}\':')
         for file in files_list:

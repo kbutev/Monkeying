@@ -5,6 +5,7 @@ from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from Model.InputEventType import InputEventType
 from Model.JSONInputEvent import JSONInputEvent, POINT_NAME_GENERIC, POINT_NAME_SCROLL
+from Model.ScriptInputEvent import ScriptInputEvent
 
 
 class EventActionParserProtocol(Protocol):
@@ -38,6 +39,8 @@ class EventActionParser(EventActionParserProtocol):
                 result = MouseClickEvent(KeyPressType.CLICK, event.keystroke(), event.point())
             case InputEventType.MOUSE_SCROLL:
                 result = MouseScrollEvent(event.named_point(POINT_NAME_GENERIC), event.named_point(POINT_NAME_SCROLL))
+            case InputEventType.RUN_SCRIPT:
+                result = ScriptInputEvent(event.path())
             case _:
                 assert False # Input event is not implemented or bad type
         
@@ -59,6 +62,10 @@ class EventActionParser(EventActionParserProtocol):
         elif isinstance(input_event, MouseScrollEvent):
             result.set_named_point(POINT_NAME_GENERIC, input_event.point)
             result.set_named_point(POINT_NAME_SCROLL, input_event.scroll_dt)
+        elif isinstance(input_event, ScriptInputEvent):
+            result.set_path(input_event.path)
+        else:
+            assert False
         
         return result
 

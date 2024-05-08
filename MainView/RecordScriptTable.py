@@ -1,11 +1,12 @@
 from PyQt5.QtWidgets import *
 
+from Constants import SCRIPT_FILE_FORMAT
 from Model.InputEvent import InputEventDescription
 
 
 class RecordScriptTableDataSource:
     data = []
-    file_format = 'json'
+    file_format = SCRIPT_FILE_FORMAT
     
     def count(self) -> int:
         return len(self.data)

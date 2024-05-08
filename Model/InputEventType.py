@@ -10,6 +10,8 @@ class InputEventType(enum.StrEnum):
     MOUSE_CLICK = "mouse.click"
     MOUSE_MOVE = "mouse.move"
     MOUSE_SCROLL = "mouse.scroll"
+
+    RUN_SCRIPT = "action.run_script"
     
     def is_keyboard(self) -> bool:
         return (self == InputEventType.KEYBOARD_PRESS or 
@@ -17,4 +19,8 @@ class InputEventType(enum.StrEnum):
                 self == InputEventType.KEYBOARD_CLICK)
     
     def is_mouse(self) -> bool:
-        return not self.is_keyboard()
+        return (self == InputEventType.MOUSE_PRESS or 
+                self == InputEventType.MOUSE_RELEASE or
+                self == InputEventType.MOUSE_CLICK or
+                self == InputEventType.MOUSE_MOVE or
+                self == InputEventType.MOUSE_SCROLL)

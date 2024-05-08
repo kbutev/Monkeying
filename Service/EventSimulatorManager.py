@@ -73,7 +73,7 @@ class EventSimulatorManager:
     
     def progress_fraction(self) -> float:
         current = self.worker.elapsed_time()
-        duration = self.worker.total_duration()
+        duration = self.worker.duration()
         return current / duration if duration > 0 else 1
     
     def print(self, message):
