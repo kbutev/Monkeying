@@ -1,10 +1,11 @@
 from Model.InputEvent import InputEvent
+from Model.MessageInputEvent import MessageInputEvent
 from Model.ScriptInputEvent import ScriptInputEvent
 from Parser.EventActionParser import EventActionParserProtocol, EventActionParser
 from Service import SettingsManager
 from Service.EventStorage import EventStorage
 from Service.SettingsManager import SettingsManagerField
-from Service.Work.EventExecution import EventKeyExecution, ScriptExecution
+from Service.Work.EventExecution import EventKeyExecution, ScriptExecution, EventMessageExecution
 from Utilities.Path import Path
 
 
@@ -20,12 +21,14 @@ class EventExecutionBuilder:
         
         if event_type.is_keyboard() or event_type.is_mouse():
             result = EventKeyExecution(input_event, print_callback)
+        elif isinstance(input_event, MessageInputEvent):
+            result = EventMessageExecution(input_event)
         elif isinstance(input_event, ScriptInputEvent):
             storage = EventStorage()
             script_file_path = input_event.path
             storage.read_from_file(script_file_path)
             events = list(map(lambda event: self.event_parser.parse_json(event), storage.data.copy()))
-            result = ScriptExecution(events, self)
+            result = ScriptExecution(script_file_path, events, self)
         else:
             assert False
         

@@ -2,6 +2,7 @@ from typing import Protocol
 from Model.InputEvent import InputEventDescription, InputEvent
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
+from Model.MessageInputEvent import MessageInputEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from Model.InputEventType import InputEventType
 from Model.JSONInputEvent import JSONInputEvent, POINT_NAME_GENERIC, POINT_NAME_SCROLL
@@ -39,6 +40,8 @@ class EventActionParser(EventActionParserProtocol):
                 result = MouseClickEvent(KeyPressType.CLICK, event.keystroke(), event.point())
             case InputEventType.MOUSE_SCROLL:
                 result = MouseScrollEvent(event.named_point(POINT_NAME_GENERIC), event.named_point(POINT_NAME_SCROLL))
+            case InputEventType.MESSAGE:
+                result = MessageInputEvent(event.message(), event.message_notification())
             case InputEventType.RUN_SCRIPT:
                 result = ScriptInputEvent(event.path())
             case _:
@@ -62,6 +65,9 @@ class EventActionParser(EventActionParserProtocol):
         elif isinstance(input_event, MouseScrollEvent):
             result.set_named_point(POINT_NAME_GENERIC, input_event.point)
             result.set_named_point(POINT_NAME_SCROLL, input_event.scroll_dt)
+        elif isinstance(input_event, MessageInputEvent):
+            result.set_message(input_event.message())
+            result.set_message_notification(input_event.notifications_enabled())
         elif isinstance(input_event, ScriptInputEvent):
             result.set_path(input_event.path)
         else:

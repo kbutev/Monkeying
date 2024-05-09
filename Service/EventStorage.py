@@ -47,6 +47,7 @@ class EventStorage:
     data = []
     parser = JSONInputEventParser()
     
+    file_path: Path = None
     info = EventStorageInfo()
     
     print_callback = None
@@ -114,6 +115,8 @@ class EventStorage:
         if isinstance(path, Path):
             path = path.absolute
         
+        self.file_path = Path(path)
+        
         print(f"write data to \'{path}\'")
         file = open(path, permissions, encoding=encoding)
         file.write(self.data_as_json(root=root))
@@ -123,6 +126,8 @@ class EventStorage:
     def read_from_file(self, path, permissions='r', encoding="utf-8", root="root"):
         if isinstance(path, Path):
             path = path.absolute
+        
+        self.file_path = Path(path)
         
         print(f"read data from \'{path}\'")
         self.clear()

@@ -3,6 +3,7 @@ import threading
 from PyQt5.QtCore import QThread
 from Service.Work.EventExecution import ScriptExecution
 from Service.Work.EventExecutionBuilder import EventExecutionBuilder
+from Utilities.Path import Path
 
 WAIT_INTERVAL = 2 # Time to wait (in ms) when idle
 WAIT_INTERVAL_WHEN_PAUSED = 10
@@ -23,9 +24,9 @@ class ScriptSimulationWorker(QThread):
     
     print_callback = None
     
-    def __init__(self, events):
+    def __init__(self, script_path: Path, events):
         super(ScriptSimulationWorker, self).__init__()
-        self.current_execution = ScriptExecution(events, EventExecutionBuilder())
+        self.current_execution = ScriptExecution(script_path, events, EventExecutionBuilder())
     
     def state(self) -> ScriptSimulationWorkerState:
         with self.lock:
@@ -64,7 +65,7 @@ class ScriptSimulationWorker(QThread):
         with self.lock:
             self._state = ScriptSimulationWorkerState.RUNNING
         
-        self.current_execution.execute()
+        self.current_execution.execute(None)
         
         while self.state() != ScriptSimulationWorkerState.FINISHED:
             # Wait forever while paused until resumed

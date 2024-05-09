@@ -1,7 +1,8 @@
 from typing import Protocol
 
-from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QComboBox, QPushButton
+from PyQt5.QtCore import QRegularExpression
+from PyQt5.QtGui import QDoubleValidator, QRegularExpressionValidator
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QRadioButton
 from Model.Point import Point
 
 
@@ -76,6 +77,80 @@ class EditScriptActionFieldDropDown(EditScriptActionField):
     
     def on_value_changed(self):
         self.value = self.combo_box.itemText(self.selected_index())
+        self.delegate.set_value(self.value)
+
+
+class EditScriptActionFieldBool(EditScriptActionField):
+    button: QRadioButton
+    
+    def __init__(self, name: str, parent=None):
+        super(EditScriptActionFieldBool, self).__init__(parent)
+        self.setup(name)
+    
+    def setup(self, name: str):
+        self.name = name
+        
+        layout = QHBoxLayout()
+        
+        label = QLabel(name)
+        layout.addWidget(label)
+        self.button = QRadioButton()
+        layout.addWidget(self.button)
+        
+        self.setLayout(layout)
+    
+    def set_value(self, value):
+        self.button.setChecked(value)
+    
+    def enable_connection(self):
+        self.button.clicked.connect(self.on_value_changed)
+    
+    def disable_connection(self):
+        self.button.clicked.disconnect()
+    
+    def on_value_changed(self):
+        self.value = self.button.isChecked()
+        self.delegate.set_value(self.value)
+
+class EditScriptActionFieldString(EditScriptActionField):
+    field: QLineEdit
+    validator = QRegularExpressionValidator()
+    
+    def __init__(self, name: str, parent=None):
+        super(EditScriptActionFieldString, self).__init__(parent)
+        self.setup(name)
+    
+    def setup(self, name: str):
+        self.name = name
+        
+        self.validator.setRegularExpression(QRegularExpression("^[^'\"]*$"))
+        
+        layout = QHBoxLayout()
+        
+        label = QLabel(name)
+        layout.addWidget(label)
+        self.field = QLineEdit()
+        self.field.setValidator(self.validator)
+        layout.addWidget(self.field)
+        
+        self.setLayout(layout)
+    
+    def set_value(self, value):
+        self.set_text(value)
+    
+    def set_text(self, text):
+        self.value = text
+        
+        self.field.setText(str(text))
+    
+    def enable_connection(self):
+        self.field.textChanged.connect(self.on_value_changed)
+    
+    def disable_connection(self):
+        self.field.textChanged.disconnect()
+    
+    def on_value_changed(self):
+        self.value = self.field.text()
         self.delegate.set_value(self.value)
 
 class EditScriptActionFieldFloat(EditScriptActionField):

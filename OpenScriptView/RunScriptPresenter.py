@@ -23,7 +23,7 @@ class RunScriptPresenter(Presenter):
     working_dir: Path
     file_format: str
     
-    storage_data = []
+    storage = []
     script: str
     
     running = False
@@ -51,7 +51,7 @@ class RunScriptPresenter(Presenter):
         
         storage = EventStorage()
         storage.read_from_file(PathUtils.combine_paths(self.working_dir, script))
-        self.storage_data = storage.data
+        self.storage = storage
         self.script = script
         
         self.update_timer = QTimer(self)
@@ -67,7 +67,7 @@ class RunScriptPresenter(Presenter):
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
         
-        events = list(map(lambda event: self.event_parser.parse(event), self.storage_data))
+        events = list(map(lambda event: self.event_parser.parse(event), self.storage.data))
         self.widget.set_events_data(events)
         self.widget.update_progress(0, 0)
     
@@ -95,9 +95,7 @@ class RunScriptPresenter(Presenter):
         print('RunScriptPresenter run script')
         
         self.running = True
-        storage = EventStorage()
-        storage.data = self.storage_data
-        self.simulator = EventSimulatorManager(storage)
+        self.simulator = EventSimulatorManager(self.storage)
         self.simulator.delegate = self
         self.simulator.start()
 

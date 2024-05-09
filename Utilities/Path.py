@@ -8,6 +8,12 @@ class Path:
     def __init__(self, path):
         self.absolute = path
     
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.absolute == other.absolute
+        else:
+            return False
+    
     def is_empty(self) -> bool:
         return len(self.absolute) == 0
     

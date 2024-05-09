@@ -9,6 +9,8 @@ ENTRY_KEYSTROKE = "v"
 ENTRY_POINT_X = "x"
 ENTRY_POINT_Y = "y"
 ENTRY_POINTS = "points"
+ENTRY_MESSAGE = "message"
+ENTRY_MESSAGE_NOTIFICATION = "notification"
 ENTRY_PATH = "path"
 
 POINT_NAME_GENERIC = '0'
@@ -74,6 +76,24 @@ class JSONInputEvent:
         
         point_values = self.values[ENTRY_POINTS]
         point_values[name] = {ENTRY_POINT_X: str(point.x), ENTRY_POINT_Y: str(point.y)}
+    
+    def message(self) -> str:
+        if ENTRY_MESSAGE not in self.values:
+            return ''
+        
+        return self.values[ENTRY_MESSAGE]
+    
+    def set_message(self, value):
+        self.values[ENTRY_MESSAGE] = value
+    
+    def message_notification(self) -> bool:
+        if ENTRY_MESSAGE_NOTIFICATION not in self.values:
+            return False
+        
+        return bool(self.values[ENTRY_MESSAGE_NOTIFICATION])
+    
+    def set_message_notification(self, value):
+        self.values[ENTRY_MESSAGE_NOTIFICATION] = str(value)
     
     def path(self) -> Path:
         return Path(self.values[ENTRY_PATH])

@@ -1,10 +1,12 @@
 from typing import Protocol
 from PyQt5.QtWidgets import QWidget
 from EditScriptAction.EditScriptActionField import EditScriptActionFieldFloat, EditScriptActionFieldPoint, \
-    EditScriptActionFieldKeyboardChar, EditScriptActionFieldDropDown, EditScriptActionField
+    EditScriptActionFieldKeyboardChar, EditScriptActionFieldDropDown, EditScriptActionField, \
+    EditScriptActionFieldString, EditScriptActionFieldBool
 from EditScriptAction.EditScriptActionFieldPresenter import EditScriptActionFieldPresenter
 from Model.InputEvent import InputEvent
 from Model.KeyboardInputEvent import KeystrokeEvent
+from Model.MessageInputEvent import MessageInputEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from Model.InputEventType import InputEventType
 from pynput.mouse import Button as MouseKey
@@ -107,6 +109,19 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
             
             fields.append(loc)
             fields.append(dt)
+        elif isinstance(input_event, MessageInputEvent):
+            message = EditScriptActionFieldString('Message')
+            presenter = EditScriptActionFieldPresenter(input_event.message, input_event.set_message)
+            message.delegate = presenter
+            presenter.start(message)
+            
+            notifications = EditScriptActionFieldBool('Notification')
+            presenter = EditScriptActionFieldPresenter(input_event.notifications_enabled, input_event.set_notifications_enabled)
+            notifications.delegate = presenter
+            presenter.start(notifications)
+            
+            fields.append(message)
+            fields.append(notifications)
         elif isinstance(input_event, ScriptInputEvent):
             assert self.context_script_path is not None
             
@@ -128,7 +143,7 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
             
             fields.append(paths)
         else:
-            assert False
+            assert False # Event not implemented
         
         return EditScriptActionFieldBuilderContext(fields, type_field, time_field)
     

@@ -35,7 +35,7 @@ class EventSimulatorManager:
         
         self.running = True
         data = list(map(lambda event: self.parser.parse_json(event), self.storage.data.copy()))
-        worker = ScriptSimulationWorker(data)
+        worker = ScriptSimulationWorker(self.storage.file_path, data)
         worker.print_callback = self.print_callback
         worker.delegate = self
         worker.finished.connect(self.on_end)
