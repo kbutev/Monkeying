@@ -1,6 +1,7 @@
 from typing import Protocol
 from MainView.SettingsWidget import SettingsWidgetProtocol
 from Model.KeyboardInputEvent import KeystrokeEvent
+from Parser import KeyboardKeyParser
 from Presenter.Presenter import Presenter
 from Service.SettingsManager import SettingsManagerField
 from Service import SettingsManager
@@ -29,11 +30,11 @@ class SettingsPresenter(Presenter):
     
     def load_default_values(self):
         play_hotkey = SettingsManagerField.PLAY_HOTKEY
-        self.widget.setup_field(play_hotkey, self.manager.field_value(play_hotkey))
+        self.widget.setup_field(play_hotkey, KeyboardKeyParser.key_to_string(self.manager.field_value(play_hotkey)))
         pause_hotkey = SettingsManagerField.PAUSE_HOTKEY
-        self.widget.setup_field(pause_hotkey, self.manager.field_value(pause_hotkey))
+        self.widget.setup_field(pause_hotkey, KeyboardKeyParser.key_to_string(self.manager.field_value(pause_hotkey)))
         record_hotkey = SettingsManagerField.RECORD_HOTKEY
-        self.widget.setup_field(record_hotkey, self.manager.field_value(record_hotkey))
+        self.widget.setup_field(record_hotkey, KeyboardKeyParser.key_to_string(self.manager.field_value(record_hotkey)))
     
     def save_settings(self):
         self.manager.write_to_file()
