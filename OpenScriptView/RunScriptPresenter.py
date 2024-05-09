@@ -1,17 +1,16 @@
 import time
 from typing import Protocol
-
 from PyQt5.QtCore import QTimer
-
-from Constants import SCRIPTS_DEFAULT_DIR, SCRIPT_FILE_FORMAT
 from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventStorage import EventStorage
 from Service.EventSimulatorManager import EventSimulatorManager
 from OpenScriptView.RunScriptWidget import RunScriptWidgetProtocol
-from Service.SettingsManager import SettingsManager
-from Utilities import Path
+from Service.SettingsManager import SettingsManagerField
+from Service import SettingsManager
+from Utilities import Path as PathUtils
+from Utilities.Path import Path
 
 
 class RunScriptPresenterRouter(Protocol):
@@ -21,8 +20,8 @@ class RunScriptPresenter(Presenter):
     widget: RunScriptWidgetProtocol = None
     router: RunScriptPresenterRouter = None
     
-    working_dir = SCRIPTS_DEFAULT_DIR
-    file_format = SCRIPT_FILE_FORMAT
+    working_dir: Path
+    file_format: str
     
     storage_data = []
     script: str
@@ -46,8 +45,12 @@ class RunScriptPresenter(Presenter):
     def __init__(self, script):
         super(RunScriptPresenter, self).__init__()
         
+        settings = SettingsManager.singleton
+        self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        
         storage = EventStorage()
-        storage.read_from_file(Path.combine_paths(self.working_dir, script))
+        storage.read_from_file(PathUtils.combine_paths(self.working_dir, script))
         self.storage_data = storage.data
         self.script = script
         
@@ -57,9 +60,9 @@ class RunScriptPresenter(Presenter):
         self.update_timer.timeout.connect(self.update_events)
     
     def start(self):
-        settings = SettingsManager()
-        self.play_trigger_key = settings.play_hotkey()
-        self.pause_trigger_key = settings.pause_hotkey()
+        settings = SettingsManager.singleton
+        self.play_trigger_key = settings.field_value(SettingsManagerField.PLAY_HOTKEY)
+        self.pause_trigger_key = settings.field_value(SettingsManagerField.PAUSE_HOTKEY)
         
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()

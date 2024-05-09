@@ -1,12 +1,9 @@
 from PyQt5.QtWidgets import *
-
-from Constants import SCRIPT_FILE_FORMAT
 from Model.InputEvent import InputEventDescription
 
 
 class RecordScriptTableDataSource:
     data = []
-    file_format = SCRIPT_FILE_FORMAT
     
     def count(self) -> int:
         return len(self.data)
@@ -17,7 +14,7 @@ class RecordScriptTableDataSource:
         entry: InputEventDescription = self.data[row]
         
         match column:
-            case 0: return QTableWidgetItem(entry.time)
+            case 0: return QTableWidgetItem(entry.timestamp)
             case 1: return QTableWidgetItem(entry.type)
             case 2: return QTableWidgetItem(entry.value)
 

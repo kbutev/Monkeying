@@ -1,6 +1,7 @@
 from Model.InputEvent import InputEvent
 from Model.InputEventType import InputEventType
-from Utilities import Path
+from Utilities.Path import Path
+from Utilities import Path as PathUtil
 
 FLOAT_ROUND_DECIMALS = 3
 
@@ -35,10 +36,10 @@ class ScriptInputEvent(InputEvent):
     def set_file_name(self, value):
         assert isinstance(value, str)
         base = self.path.base_path()
-        self.path = Path.combine_paths(base, value)
+        self.path = PathUtil.combine_paths(base, value)
     
     def event_type(self) -> InputEventType:
         return InputEventType.RUN_SCRIPT
     
     def value_as_string(self) -> str:
-        return f'{self.path.absolute}'
+        return f'{self.path.last_component()}'

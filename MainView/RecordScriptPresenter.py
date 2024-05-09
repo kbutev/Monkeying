@@ -8,9 +8,9 @@ from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventMonitorManager import EventMonitorManager
 from MainView.RecordScriptWidget import RecordScriptWidgetProtocol
-from pynput.keyboard import Key as KButton
 from Service.EventStorage import EventStorage
-from Service.SettingsManager import SettingsManager
+from Service.SettingsManager import SettingsManagerField
+from Service import SettingsManager
 
 
 class RecordScriptPresenterRouter(Protocol):
@@ -55,7 +55,7 @@ class RecordScriptPresenter(Presenter):
         return self.running
     
     def start(self):
-        self.trigger_key = SettingsManager().record_hotkey()
+        self.trigger_key = SettingsManager.singleton.field_value(SettingsManagerField.RECORD_HOTKEY)
         
         self.keyboard_monitor = KeyboardEventMonitor()
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)

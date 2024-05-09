@@ -1,6 +1,4 @@
 from typing import Protocol
-
-from Constants import SCRIPTS_DEFAULT_DIR, SCRIPT_FILE_FORMAT
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from OpenScriptView.EditScriptWidget import EditScriptWidgetProtocol
@@ -8,7 +6,10 @@ from Parser.EventActionParser import EventActionToStringParserProtocol, EventAct
     EventActionParserProtocol, EventActionParser
 from Presenter.Presenter import Presenter
 from Service.EventStorage import EventStorage
-from Utilities import Path
+from Service.SettingsManager import SettingsManagerField
+from Service import SettingsManager
+from Utilities import Path as PathUtils
+from Utilities.Path import Path
 
 INSERT_EVENT_TIME_ADVANCE = 0.1 # When inserting a new event, it's time is based on the currently selected event plus this value
 
@@ -22,8 +23,8 @@ class EditScriptPresenter(Presenter):
     widget: EditScriptWidgetProtocol = None
     router: EditScriptPresenterRouter = None
     
-    working_dir = SCRIPTS_DEFAULT_DIR
-    file_format = SCRIPT_FILE_FORMAT
+    working_dir: Path
+    file_format: str
     
     storage = EventStorage()
     events = []
@@ -36,7 +37,11 @@ class EditScriptPresenter(Presenter):
     def __init__(self, script):
         super(EditScriptPresenter, self).__init__()
         
-        self._script_path = Path.combine_paths(self.working_dir, script)
+        settings = SettingsManager.singleton
+        self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        
+        self._script_path = PathUtils.combine_paths(self.working_dir, script)
         self.storage.read_from_file(self._script_path)
         self.events = list(map(lambda event: self.event_parser.parse_json(event), self.storage.data))
         self.setup_event_descriptions()

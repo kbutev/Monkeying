@@ -92,7 +92,7 @@ class EventActionToStringParser(EventActionToStringParserProtocol):
         result = InputEventDescription()
         
         input_event: InputEvent = event
-        result.time = "{:.3f}".format(input_event.time())
+        result.timestamp = "{:.3f}".format(input_event.time())
         result.type = input_event.event_type().name
         result.value = input_event.value_as_string()
         

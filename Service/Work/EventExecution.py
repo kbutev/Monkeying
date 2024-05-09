@@ -135,6 +135,7 @@ class ScriptExecution(EventExecution):
                 self.current_execution.execute()
                 
                 if self.current_execution.update():
+                    self.timer.pause() # The timer has to be paused while the async event is running
                     break
                 else:
                     self.next_event()
@@ -148,6 +149,8 @@ class ScriptExecution(EventExecution):
         
         if len(self.events) == 0:
             self.timer.stop()
+        elif self.timer.is_paused():
+            self.timer.resume()
     
     def print(self, message):
         if self.print_callback is not None:

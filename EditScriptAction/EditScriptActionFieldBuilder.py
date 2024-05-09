@@ -9,10 +9,11 @@ from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEv
 from Model.InputEventType import InputEventType
 from pynput.mouse import Button as MouseKey
 from Model.ScriptInputEvent import ScriptInputEvent
-from Utilities import Path
+from Service.SettingsManager import SettingsManagerProtocol, SettingsManagerField
+from Service import SettingsManager
+from Utilities import Path as PathUtils
+from Utilities.Path import Path
 
-DEFAULT_BASE_DIR = 'scripts'
-SCRIPT_FILE_FORMAT = 'json'
 
 class EditScriptActionFieldBuilderContext:
     fields = []
@@ -55,6 +56,7 @@ class EditScriptActionFieldBuilderProtocol(Protocol):
 
 class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
     context_script_path: Path = None
+    settings: SettingsManagerProtocol = SettingsManager.singleton
     
     def start(self, input_event) -> EditScriptActionFieldBuilderContext:
         fields = []
@@ -108,15 +110,16 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
         elif isinstance(input_event, ScriptInputEvent):
             assert self.context_script_path is not None
             
-            base_dir = DEFAULT_BASE_DIR
-            items = Path.directory_file_list(base_dir, SCRIPT_FILE_FORMAT)
+            base_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+            file_format = self.settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+            items = PathUtils.directory_file_list(base_dir, file_format)
             context_script_file = self.context_script_path.last_component()
             
             # Do not include the context script to avoid recursion
             items.remove(context_script_file)
             
             if input_event.path.is_empty():
-                input_event.set_absolute_path(Path.combine_paths(base_dir, items[0]))
+                input_event.set_absolute_path(PathUtils.combine_paths(base_dir, items[0]))
             
             paths = EditScriptActionFieldDropDown('Script', items)
             presenter = EditScriptActionFieldPresenter(input_event.file_name, input_event.set_file_name)

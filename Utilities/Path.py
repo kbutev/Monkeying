@@ -44,15 +44,16 @@ def system_file_separator() -> str:
     return "/"
 
 def combine_paths(first, second):
-    if len(first) == 0:
-        return second
-    
-    if len(second) == 0:
-        return first
+    if isinstance(first, Path): first = first.absolute
+    if isinstance(second, Path): second = second.absolute
+    if len(first) == 0: return Path(second)
+    if len(second) == 0: return Path(first)
     
     return Path(first + system_file_separator() + second)
 
 def directory_file_list(directory, file_format = None) -> []:
+    if isinstance(directory, Path): directory = directory.absolute
+    
     result = [f for f in listdir(directory) if isfile(join(directory, f))]
     
     if file_format is not None:

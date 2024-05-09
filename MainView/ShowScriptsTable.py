@@ -1,11 +1,14 @@
 from PyQt5.QtWidgets import *
-
-from Constants import SCRIPT_FILE_FORMAT
+from Service.SettingsManager import *
+from Service import SettingsManager
 
 
 class ShowScriptsTableDataSource:
     data = []
-    file_format = SCRIPT_FILE_FORMAT
+    file_format: str
+    
+    def __init__(self):
+        self.file_format = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
     
     def count(self) -> int:
         return len(self.data)

@@ -1,10 +1,10 @@
-
 from typing import Protocol
-
-from Constants import SCRIPTS_DEFAULT_DIR, SCRIPT_FILE_FORMAT
 from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
-from Utilities import Path
+from Service.SettingsManager import SettingsManagerField
+from Service import SettingsManager
+from Utilities import Path as PathUtils
+from Utilities.Path import Path
 
 
 class ShowScriptsWidgetRouter(Protocol):
@@ -14,11 +14,15 @@ class ShowScriptsPresenter(Presenter):
     widget: ShowScriptsWidgetProtocol = None
     router: ShowScriptsWidgetRouter = None
     
-    working_dir = SCRIPTS_DEFAULT_DIR
-    file_format = SCRIPT_FILE_FORMAT
+    working_dir: Path
+    file_format: str
     
     def __init__(self):
         super(ShowScriptsPresenter, self).__init__()
+        
+        settings = SettingsManager.singleton
+        self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
     
     def start(self):
         assert self.widget is not None
@@ -27,7 +31,7 @@ class ShowScriptsPresenter(Presenter):
         self.setup()
     
     def setup(self):
-        files_list = Path.directory_file_list(self.working_dir, self.file_format)
+        files_list = PathUtils.directory_file_list(self.working_dir, self.file_format)
         
         print(f'command files found in working directory \'{self.working_dir}\':')
         for file in files_list:

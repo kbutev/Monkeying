@@ -3,13 +3,11 @@ import enum
 from PyQt5.QtWidgets import *
 from typing import Protocol
 
-class SettingsParameter(enum.IntEnum):
-    HOTKEY_PLAY = 0
-    HOTKEY_PAUSE = 1
-    HOTKEY_RECORD = 2
+from Service.SettingsManager import SettingsManagerField
+
 
 class SettingsWidgetProtocol(Protocol):
-    def setup_field(self, parameter: SettingsParameter, value): pass
+    def setup_field(self, parameter: SettingsManagerField, value): pass
 
 class SettingsWidgetDelegate(Protocol):
     def save_settings(self): pass
@@ -58,20 +56,20 @@ class SettingsWidget(QWidget):
         
         self.setLayout(layout)
     
-    def setup_field(self, parameter: SettingsParameter, value):
+    def setup_field(self, parameter: SettingsManagerField, value):
         match parameter:
-            case SettingsParameter.HOTKEY_PLAY:
+            case SettingsManagerField.PLAY_HOTKEY:
                 self.play_hotkey_button.setText(value)
-            case SettingsParameter.HOTKEY_PAUSE:
+            case SettingsManagerField.PAUSE_HOTKEY:
                 self.pause_hotkey_button.setText(value)
-            case SettingsParameter.HOTKEY_RECORD:
+            case SettingsManagerField.RECORD_HOTKEY:
                 self.record_hotkey_button.setText(value)
     
     def on_play_stop_hotkey(self):
-        self.delegate.assign_hotkey(SettingsParameter.HOTKEY_PLAY)
+        self.delegate.assign_hotkey(SettingsManagerField.PLAY_HOTKEY)
     
     def on_resume_pause_hotkey(self):
-        self.delegate.assign_hotkey(SettingsParameter.HOTKEY_PAUSE)
-        
+        self.delegate.assign_hotkey(SettingsManagerField.PAUSE_HOTKEY)
+    
     def on_record_hotkey(self):
-        self.delegate.assign_hotkey(SettingsParameter.HOTKEY_RECORD)
+        self.delegate.assign_hotkey(SettingsManagerField.RECORD_HOTKEY)

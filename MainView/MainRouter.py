@@ -1,17 +1,16 @@
 from typing import Protocol
-
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
-
 from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresenter
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
-from Constants import SCRIPT_FILE_FORMAT
 from MainView.MainWidget import MainWidget
 from MainView.SettingsPresenter import SettingsPresenter
 from OpenScriptView.OpenScriptRouter import OpenScriptRouter
 from MainView.ShowScriptsPresenter import ShowScriptsPresenter
 from MainView.RecordScriptPresenter import RecordScriptPresenter
 from Service.PickFileBrowser import PickFileBrowserProtocol, PickFileBrowser
+from Service.SettingsManager import SettingsManagerField
+from Service import SettingsManager
 
 
 class MainRouter(Protocol):
@@ -22,10 +21,11 @@ class MainRouter(Protocol):
     
     pick_file_browser: PickFileBrowserProtocol = PickFileBrowser()
     
-    script_file_format = SCRIPT_FILE_FORMAT
+    file_format: str
     
     def __init__(self):
-        pass
+        settings = SettingsManager.singleton
+        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
     
     def setup(self):
         self.widget = MainWidget()
@@ -83,7 +83,7 @@ class MainRouter(Protocol):
             assert False
     
     def pick_save_file(self) -> str:
-        return self.pick_file_browser.pick_file(self.widget, "Save File", self.script_file_format)
+        return self.pick_file_browser.pick_file(self.widget, "Save File", self.file_format)
     
     def prompt_choose_key_dialog(self, sender):
         dialog = QDialog(self.widget)
