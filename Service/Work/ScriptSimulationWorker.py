@@ -1,10 +1,9 @@
 import enum
 import threading
-import time
 
 from PyQt5.QtCore import QThread
 from Model.ScriptConfiguration import ScriptConfiguration
-from Service.OSNotification import OSNotification
+from Service import OSNotificationCenter
 from Service.ScriptStorage import ScriptStorage
 from Service.Work.EventExecution import ScriptExecution
 from Service.Work.EventExecutionBuilder import EventExecutionBuilder
@@ -24,6 +23,7 @@ class ScriptSimulationWorker(QThread):
     _state = ScriptSimulationWorkerState.IDLE
     _cancelled = False
     
+    script_name: str
     script_path: Path
     events = []
     current_execution: ScriptExecution = None
@@ -37,6 +37,7 @@ class ScriptSimulationWorker(QThread):
     
     def __init__(self, storage: ScriptStorage, event_parser):
         super(ScriptSimulationWorker, self).__init__()
+        self.script_name = storage.info.name
         self.script_path = storage.file_path
         self.events = list(map(lambda event: event_parser.parse_json(event), storage.data.copy()))
         self.configuration = storage.configuration
@@ -148,22 +149,17 @@ class ScriptSimulationWorker(QThread):
                 self.current_execution.execute(self)
                 self.current_execution.start_time = start_time
     
-    def script_name(self) -> str:
-        return self.script_path.last_component()
-    
     def show_start_notification(self):
         if not self.configuration.notify_on_start:
             return
         
-        notification = OSNotification(NOTIFICATION_TITLE, f'{self.script_name()} started')
-        notification.show()
+        OSNotificationCenter.singleton.show(NOTIFICATION_TITLE, f'{self.script_name} started')
     
     def show_end_notification(self):
         if not self.configuration.notify_on_end:
             return
         
-        notification = OSNotification(NOTIFICATION_TITLE, f'{self.script_name()} ended')
-        notification.show()
+        OSNotificationCenter.singleton.show(NOTIFICATION_TITLE, f'{self.script_name} ended')
     
     def print(self, message):
         if self.print_callback is not None:

@@ -3,7 +3,7 @@ from typing import Protocol
 from Model.InputEvent import InputEvent
 from Model.MessageInputEvent import MessageInputEvent
 from Service.EventSimulator import MouseEventSimulator, KeyboardEventSimulator
-from Service.OSNotification import OSNotification
+from Service import OSNotificationCenter
 from Service.Work.EventExecutionBuilderProtocol import EventExecutionBuilderProtocol
 from Utilities.Path import Path
 from Utilities.Timer import Timer
@@ -81,8 +81,7 @@ class EventMessageExecution(EventExecution):
         self.print(f'{message}')
         
         if event.notifications_enabled():
-            notification = OSNotification("Monkeying", message)
-            notification.show()
+            OSNotificationCenter.singleton.show("Monkeying", message)
     
     def pause(self):
         pass

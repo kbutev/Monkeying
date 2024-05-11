@@ -179,5 +179,4 @@ class RunScriptPresenter(Presenter):
     def update_events(self):
         index = self.simulator.current_event_index()
         progress = int(self.simulator.progress_fraction() * 100.0)
-        #print(f'RunScriptPresenter update_events index={index} progress={progress}')
         self.widget.update_progress(index, progress)

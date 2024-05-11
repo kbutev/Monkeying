@@ -1,5 +1,4 @@
 # Python 3
-from MainView.MainWidget import MainWidget
 from PyQt5.QtWidgets import QApplication
 import sys
 from MainView.MainRouter import MainRouter

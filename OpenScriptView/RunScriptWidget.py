@@ -131,6 +131,12 @@ class RunScriptWidget(QWidget):
         self.state_button.setEnabled(len(self.data_source.data) > 0)
     
     def update_progress(self, index, percentage: int):
-        #print(f'update_events index={index} progress={percentage}')
+        count = len(self.data_source.data)
+        
+        #print(f'update_events index={index}/{count} progress={percentage}/100')
+        
+        if index >= count:
+            index = count-1
+        
         self.table.selectRow(index)
         self.progress_bar.setValue(percentage)
