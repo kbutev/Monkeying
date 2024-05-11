@@ -19,6 +19,7 @@ class RunScriptWidgetDelegate(Protocol):
     def stop_script(self, sender): pass
     def pause_script(self, sender): pass
     def resume_script(self, sender): pass
+    def configure_script(self): pass
     def enable_tabs(self, value): pass
 
 class RunScriptWidget(QWidget):
@@ -30,6 +31,7 @@ class RunScriptWidget(QWidget):
     progress_bar: QProgressBar
     state_button: QPushButton
     pause_button: QPushButton
+    config_button: QPushButton
     
     def __init__(self, parent=None):
         super(RunScriptWidget, self).__init__(parent)
@@ -54,6 +56,10 @@ class RunScriptWidget(QWidget):
         layout.addWidget(self.pause_button)
         self.pause_button.setEnabled(False)
         
+        self.config_button = QPushButton('Configuration')
+        layout.addWidget(self.config_button)
+        self.config_button.clicked.connect(self.configure_script)
+        
         self.setLayout(layout)
     
     def run_script(self, sender):
@@ -64,6 +70,7 @@ class RunScriptWidget(QWidget):
         
         self.setup_pause_script()
         self.pause_button.setEnabled(True)
+        self.config_button.setEnabled(False)
         
         if self.delegate is not None: self.delegate.enable_tabs(False)
         
@@ -79,6 +86,7 @@ class RunScriptWidget(QWidget):
         
         self.setup_pause_script()
         self.pause_button.setEnabled(False)
+        self.config_button.setEnabled(True)
         
         if self.delegate is not None: self.delegate.enable_tabs(True)
         
@@ -102,6 +110,9 @@ class RunScriptWidget(QWidget):
             if self.delegate is not None: self.delegate.resume_script(sender=self)
         else:
             assert sender is self.delegate  # Unrecognized sender
+    
+    def configure_script(self):
+        self.delegate.configure_script()
     
     def setup_pause_script(self):
         self.pause_button.setText('Pause')

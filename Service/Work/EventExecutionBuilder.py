@@ -3,7 +3,7 @@ from Model.MessageInputEvent import MessageInputEvent
 from Model.ScriptInputEvent import ScriptInputEvent
 from Parser.EventActionParser import EventActionParserProtocol, EventActionParser
 from Service import SettingsManager
-from Service.EventStorage import EventStorage
+from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField
 from Service.Work.EventExecution import EventKeyExecution, ScriptExecution, EventMessageExecution
 from Utilities.Path import Path
@@ -24,7 +24,7 @@ class EventExecutionBuilder:
         elif isinstance(input_event, MessageInputEvent):
             result = EventMessageExecution(input_event)
         elif isinstance(input_event, ScriptInputEvent):
-            storage = EventStorage()
+            storage = ScriptStorage()
             script_file_path = input_event.path
             storage.read_from_file(script_file_path)
             events = list(map(lambda event: self.event_parser.parse_json(event), storage.data.copy()))

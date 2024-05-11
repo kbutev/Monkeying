@@ -1,4 +1,3 @@
-import os
 import time
 from typing import Protocol
 from Model.InputEvent import InputEvent
@@ -44,7 +43,7 @@ class EventKeyExecution(EventExecution):
         
         event = self.event
         
-        self.print(f'simulate {event.event_type().name} : {event.value_as_string()}')
+        #self.print(f'simulate {event.event_type().name} : {event.value_as_string()}')
         
         if event.event_type().is_keyboard():
             self.keyboard_simulator.simulate(event)
@@ -116,7 +115,7 @@ class ScriptExecution(EventExecution):
     def __init__(self, script_path: Path, events, builder, print_callback = None):
         assert len(events) > 0
         self.script_path = script_path
-        self.events = events
+        self.events = events.copy()
         self.timer = Timer()
         self.duration_time = events[len(events)-1].time() if len(events) > 0 else 0
         self.builder = builder
@@ -139,6 +138,8 @@ class ScriptExecution(EventExecution):
         return self.original_event_count - len(self.events)
     
     def execute(self, parent=None):
+        # Note that the script configuration is ignored
+        # The script configuration is applied only for the root script
         current_script = parent
         
         while current_script is not None and isinstance(current_script, ScriptExecution):
@@ -178,12 +179,15 @@ class ScriptExecution(EventExecution):
                 self.go_to_next_event()
         
         # Update next event
-        while len(self.events) > 0 and self.current_execution is None:
-            self.execute_next_event()
+        while self.execute_next_event():
+            pass
         
         return True
     
-    def execute_next_event(self):
+    def execute_next_event(self) -> bool:
+        if len(self.events) == 0:
+            return False
+        
         next_event = self.events[0]
         
         # If it's time, execute event
@@ -193,10 +197,13 @@ class ScriptExecution(EventExecution):
             
             if self.current_execution.update():
                 self.timer.pause()  # The timer has to be paused while the async event is running
+                return False
             else:
                 self.go_to_next_event()
+                return True
         else:
             self.current_execution = None
+            return False
     
     def go_to_next_event(self):
         assert len(self.events) > 0

@@ -5,7 +5,7 @@ from OpenScriptView.EditScriptWidget import EditScriptWidgetProtocol
 from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser, \
     EventActionParserProtocol, EventActionParser
 from Presenter.Presenter import Presenter
-from Service.EventStorage import EventStorage
+from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField
 from Service import SettingsManager
 from Utilities import Path as PathUtils
@@ -17,6 +17,7 @@ class EditScriptPresenterRouter(Protocol):
     def enable_tabs(self, enabled): pass
     def insert_script_action(self, parent, input_event): pass
     def edit_script_action(self, parent, event_index, input_event): pass
+    def configure_script(self, parent): pass
     def on_save_edit_script_action(self, event_index, input_event): pass
 
 class EditScriptPresenter(Presenter):
@@ -26,7 +27,7 @@ class EditScriptPresenter(Presenter):
     working_dir: Path
     file_format: str
     
-    storage = EventStorage()
+    storage = ScriptStorage()
     events = []
     event_descriptions = []
     _script_path: Path
@@ -73,6 +74,9 @@ class EditScriptPresenter(Presenter):
         self.storage.data = storage_data
         self.storage.update_modified_date()
         self.storage.write_to_file(self._script_path)
+    
+    def on_configure_script(self):
+        self.router.configure_script(self.widget)
     
     def insert_script_action(self, event_index):
         assert 0 <= event_index

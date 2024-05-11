@@ -1,5 +1,7 @@
 from typing import Protocol
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
+
+from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
 from EditScriptAction.EditScriptActionRouter import EditScriptActionRouter
 from OpenScriptView.EditScriptPresenter import EditScriptPresenter
 from OpenScriptView.OpenScriptWidget import OpenScriptWidget
@@ -60,6 +62,11 @@ class OpenScriptRouter(Protocol):
     
     def edit_script_action(self, parent, event_index, input_event):
         router = EditScriptActionRouter(False, event_index, input_event, self.edit_script_presenter)
+        router.setup(parent)
+        router.widget.exec()
+    
+    def configure_script(self, parent):
+        router = ConfigureScriptRouter(self.edit_script_presenter.script_path())
         router.setup(parent)
         router.widget.exec()
     

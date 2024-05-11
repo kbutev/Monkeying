@@ -5,6 +5,7 @@ from Model.InputEvent import InputEvent
 from Model.MouseInputEvent import MouseScrollEvent
 from Model.InputEventType import InputEventType
 from Model.JSONInputEvent import POINT_NAME_GENERIC, POINT_NAME_SCROLL
+from Model.ScriptConfiguration import ScriptConfiguration
 from Parser.JSONInputEventParser import JSONInputEventParser
 from Utilities.Path import Path
 
@@ -16,12 +17,13 @@ JSON_INFO_VERSION = 'version'
 JSON_INFO_CDATE = 'date-created'
 JSON_INFO_MDATE = 'date-modified'
 JSON_INFO_EVENT_COUNT = 'event-count'
+JSON_CONFIGURATION = 'configuration'
 JSON_EVENTS = 'events'
 
 def current_date():
     return datetime.today().strftime('%Y.%m.%d %H:%M:%S')
 
-class EventStorageInfo:
+class ScriptStorageInfo:
     version = CURRENT_VERSION
     date_created = None
     date_modified = None
@@ -43,14 +45,19 @@ class EventStorageInfo:
         self.date_created = json[JSON_INFO_CDATE]
         self.date_modified = json[JSON_INFO_MDATE]
 
-class EventStorage:
+class ScriptStorage:
     data = []
     parser = JSONInputEventParser()
     
     file_path: Path = None
-    info = EventStorageInfo()
+    info = ScriptStorageInfo()
+    configuration = ScriptConfiguration()
     
     print_callback = None
+    
+    def __init__(self, path: Path = None):
+        if path is not None:
+            self.read_from_file(path)
     
     def clear(self):
         self.data = []
@@ -64,6 +71,7 @@ class EventStorage:
         data = {
             root: {
                 JSON_INFO: self.info.json(len(self.data)),
+                JSON_CONFIGURATION: self.configuration.json(),
                 JSON_EVENTS: self.data
             }
         }
@@ -136,6 +144,7 @@ class EventStorage:
         
         contents = json.loads(file_contents)[root]
         self.info.read_from_json(contents[JSON_INFO])
+        self.configuration.read_from_json(contents[JSON_CONFIGURATION])
         self.data = contents[JSON_EVENTS]
         file.close()
         print("data read successfully")

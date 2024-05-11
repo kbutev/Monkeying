@@ -8,7 +8,7 @@ from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventMonitorManager import EventMonitorManager
 from MainView.RecordScriptWidget import RecordScriptWidgetProtocol
-from Service.EventStorage import EventStorage
+from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField
 from Service import SettingsManager
 
@@ -16,12 +16,13 @@ from Service import SettingsManager
 class RecordScriptPresenterRouter(Protocol):
     def enable_tabs(self, value): pass
     def pick_save_file(self) -> str: pass
+    def configure_script(self, script_path, parent): pass
 
 class RecordScriptPresenter(Presenter):
     router: RecordScriptPresenterRouter = None
     widget: RecordScriptWidgetProtocol = None
     
-    storage = EventStorage()
+    storage = ScriptStorage()
     event_monitor = EventMonitorManager(storage)
     keyboard_monitor = KeyboardEventMonitor()
     
@@ -107,6 +108,11 @@ class RecordScriptPresenter(Presenter):
         if sender is not self.widget:
             self.widget.stop_recording(sender=self)
     
+    def configure_script(self):
+        script_path = self.storage.file_path
+        assert script_path is not None
+        self.router.configure_script(script_path, self.widget)
+    
     def save_recording(self):
         assert self.router is not None
         
@@ -119,6 +125,8 @@ class RecordScriptPresenter(Presenter):
             
             self.storage.write_to_file(path=file)
             self.widget.disable_save_recording()
+        
+        self.widget.on_script_save()
     
     def on_key_press(self, event):
         time_since_last_usage = time.time() - self.hotkey_click_time

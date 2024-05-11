@@ -1,12 +1,15 @@
 from win10toast import ToastNotifier
 #from pync import Notifier
 
-DURATION = 60 * 60 * 24 # Duration before the notification is erased from history. 24 hours.
+# Duration before the notification is erased from history. 24 hours.
+# For win10toast, only one notification may be shown at a time.
+DURATION = 5 # 5 sec
+
+singleton = ToastNotifier()
 
 class OSNotification:
     title: str
     message: str
-    toast = ToastNotifier()
     
     def __init__(self, title, message):
         self.title = title
@@ -14,4 +17,5 @@ class OSNotification:
     
     def show(self):
         # TODO: support Mac (maybe use pync?)
-        self.toast.show_toast(self.title, self.message, duration=DURATION, threaded=True)
+        singleton.show_toast(self.title, self.message, duration=DURATION, threaded=True)
+        print(f'OSNotification: show notification {self.message}')

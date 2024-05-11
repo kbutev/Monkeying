@@ -14,6 +14,7 @@ class EditScriptWidgetDelegate(Protocol):
     def on_begin(self): pass
     def on_stop(self): pass
     def on_save(self): pass
+    def on_configure_script(self): pass
     def insert_script_action(self, index): pass
     def delete_script_action(self, index): pass
     def edit_script_action(self, index): pass
@@ -23,11 +24,12 @@ class EditScriptWidget(QWidget):
     
     table: EditScriptTable
     data_source = EditScriptTableDataSource()
-
+    
     insert_button: QPushButton
     delete_button: QPushButton
     edit_button: QPushButton
     save_button: QPushButton
+    config_button: QPushButton
     
     def __init__(self, parent=None):
         super(EditScriptWidget, self).__init__(parent)
@@ -56,6 +58,11 @@ class EditScriptWidget(QWidget):
         layout.addWidget(self.save_button)
         self.save_button.setEnabled(False)
         self.save_button.clicked.connect(self.save)
+        
+        # This option will remain visible only in Run script (for now)
+        #self.config_button = QPushButton('Configuration')
+        #layout.addWidget(self.config_button)
+        #self.config_button.clicked.connect(self.configure_script)
         
         self.setLayout(layout)
     
@@ -94,3 +101,6 @@ class EditScriptWidget(QWidget):
         self.save_button.setEnabled(False)
         
         if self.delegate is not None: self.delegate.on_save()
+    
+    def configure_script(self):
+        if self.delegate is not None: self.delegate.on_configure_script()

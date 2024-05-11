@@ -1,11 +1,11 @@
 
 import time
 from PyQt5.QtCore import QThread
-from Service.EventStorage import EventStorage
+from Service.ScriptStorage import ScriptStorage
 from Service.EventMonitor import MouseEventMonitor, KeyboardEventMonitor
 
 class EventMonitorWorker(QThread):
-    storage: EventStorage
+    storage: ScriptStorage
     
     start_time = 0
     
@@ -70,7 +70,7 @@ class EventMonitorWorker(QThread):
         self.storage.record(event)
 
 class EventMonitorManager:
-    storage: EventStorage
+    storage: ScriptStorage
     
     running = False
     worker: EventMonitorWorker

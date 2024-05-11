@@ -9,10 +9,12 @@ class RecordScriptWidgetProtocol(Protocol):
     def stop_recording(self, sender): pass
     def disable_save_recording(self): pass
     def set_events_data(self, data): pass
+    def on_script_save(self): pass
 
 class RecordWidgetDelegate(Protocol):
     def begin_recording(self, sender): pass
     def stop_recording(self, sender): pass
+    def configure_script(self): pass
     def save_recording(self): pass
     def enable_tabs(self, value): pass
 
@@ -24,6 +26,7 @@ class RecordScriptWidget(QWidget):
     
     state_button: QPushButton
     save_button: QPushButton
+    config_button: QPushButton
     
     def __init__(self, parent=None):
         super(RecordScriptWidget, self).__init__(parent)
@@ -42,6 +45,9 @@ class RecordScriptWidget(QWidget):
         
         config_button = QPushButton('Configuration')
         layout.addWidget(config_button)
+        config_button.clicked.connect(self.configure_script)
+        config_button.setEnabled(False)
+        self.config_button = config_button
         
         self.save_button = QPushButton('Save')
         layout.addWidget(self.save_button)
@@ -54,6 +60,7 @@ class RecordScriptWidget(QWidget):
         self.state_button.setText('Stop')
         self.state_button.clicked.disconnect()
         self.state_button.clicked.connect(lambda: self.stop_recording(sender=self))
+        self.config_button.setEnabled(False)
         
         if self.delegate is not None: self.delegate.enable_tabs(False)
         
@@ -75,6 +82,10 @@ class RecordScriptWidget(QWidget):
         else:
             assert sender is self.delegate # Unrecognized sender
     
+    def configure_script(self):
+        if self.delegate is not None:
+            self.delegate.configure_script()
+    
     def save_recording(self):
         if self.delegate is not None:
             self.delegate.save_recording()
@@ -85,3 +96,6 @@ class RecordScriptWidget(QWidget):
     def set_events_data(self, data):
         self.data_source.data = data
         self.table.update_data()
+    
+    def on_script_save(self):
+        self.config_button.setEnabled(True)

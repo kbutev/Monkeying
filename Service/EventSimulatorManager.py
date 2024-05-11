@@ -1,6 +1,6 @@
 from typing import Protocol
 from Parser.EventActionParser import EventActionParser, EventActionParserProtocol
-from Service.EventStorage import EventStorage
+from Service.ScriptStorage import ScriptStorage
 from Service.Work.ScriptSimulationWorker import ScriptSimulationWorker, ScriptSimulationWorkerState
 
 
@@ -9,7 +9,7 @@ class EventSimulatorDelegate(Protocol):
 
 class EventSimulatorManager:
     delegate: EventSimulatorDelegate
-    storage: EventStorage
+    storage: ScriptStorage
     
     running = False
     worker: ScriptSimulationWorker
@@ -34,8 +34,7 @@ class EventSimulatorManager:
         print('EventSimulatorManager start')
         
         self.running = True
-        data = list(map(lambda event: self.parser.parse_json(event), self.storage.data.copy()))
-        worker = ScriptSimulationWorker(self.storage.file_path, data)
+        worker = ScriptSimulationWorker(self.storage, self.parser)
         worker.print_callback = self.print_callback
         worker.delegate = self
         worker.finished.connect(self.on_end)

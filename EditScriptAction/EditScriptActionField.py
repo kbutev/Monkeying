@@ -1,8 +1,7 @@
 from typing import Protocol
-
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QDoubleValidator, QRegularExpressionValidator
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QRadioButton
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QCheckBox
 from Model.Point import Point
 
 
@@ -81,7 +80,7 @@ class EditScriptActionFieldDropDown(EditScriptActionField):
 
 
 class EditScriptActionFieldBool(EditScriptActionField):
-    button: QRadioButton
+    button: QCheckBox
     
     def __init__(self, name: str, parent=None):
         super(EditScriptActionFieldBool, self).__init__(parent)
@@ -94,7 +93,7 @@ class EditScriptActionFieldBool(EditScriptActionField):
         
         label = QLabel(name)
         layout.addWidget(label)
-        self.button = QRadioButton()
+        self.button = QCheckBox()
         layout.addWidget(self.button)
         
         self.setLayout(layout)

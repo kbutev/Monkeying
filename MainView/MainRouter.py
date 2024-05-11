@@ -3,6 +3,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
 from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresenter
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
+from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
 from MainView.MainWidget import MainWidget
 from MainView.SettingsPresenter import SettingsPresenter
 from OpenScriptView.OpenScriptRouter import OpenScriptRouter
@@ -84,6 +85,11 @@ class MainRouter(Protocol):
     
     def pick_save_file(self) -> str:
         return self.pick_file_browser.pick_file(self.widget, "Save File", self.file_format)
+    
+    def configure_script(self, script_path, parent):
+        router = ConfigureScriptRouter(script_path)
+        router.setup(parent)
+        router.widget.exec()
     
     def prompt_choose_key_dialog(self, sender):
         dialog = QDialog(self.widget)

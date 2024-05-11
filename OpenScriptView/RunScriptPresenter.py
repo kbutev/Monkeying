@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTimer
 from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
-from Service.EventStorage import EventStorage
+from Service.ScriptStorage import ScriptStorage
 from Service.EventSimulatorManager import EventSimulatorManager
 from OpenScriptView.RunScriptWidget import RunScriptWidgetProtocol
 from Service.SettingsManager import SettingsManagerField
@@ -15,6 +15,7 @@ from Utilities.Path import Path
 
 class RunScriptPresenterRouter(Protocol):
     def enable_tabs(self, enabled): pass
+    def configure_script(self, parent): pass
 
 class RunScriptPresenter(Presenter):
     widget: RunScriptWidgetProtocol = None
@@ -49,7 +50,7 @@ class RunScriptPresenter(Presenter):
         self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
         self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
         
-        storage = EventStorage()
+        storage = ScriptStorage()
         storage.read_from_file(PathUtils.combine_paths(self.working_dir, script))
         self.storage = storage
         self.script = script
@@ -138,6 +139,9 @@ class RunScriptPresenter(Presenter):
             self.widget.resume_script(sender=self)
         else:
             assert sender is self.widget
+    
+    def configure_script(self):
+        self.router.configure_script(self.widget)
     
     def enable_tabs(self, value):
         self.router.enable_tabs(value)
