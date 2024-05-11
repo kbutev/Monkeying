@@ -5,17 +5,12 @@ from Service import SettingsManager
 
 class ShowScriptsTableDataSource:
     data = []
-    file_format: str
-    
-    def __init__(self):
-        self.file_format = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
     
     def count(self) -> int:
         return len(self.data)
     
     def item(self, index) -> QTableWidgetItem:
-        label = self.data[index].replace(f'.{self.file_format}', '')
-        return QTableWidgetItem(label)
+        return QTableWidgetItem(self.data[index])
 
 
 class ShowScriptsTable(QTableWidget):

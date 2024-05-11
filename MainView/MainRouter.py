@@ -12,6 +12,7 @@ from MainView.RecordScriptPresenter import RecordScriptPresenter
 from Service.PickFileBrowser import PickFileBrowserProtocol, PickFileBrowser
 from Service.SettingsManager import SettingsManagerField
 from Service import SettingsManager
+from Utilities.Path import Path
 
 
 class MainRouter(Protocol):
@@ -50,22 +51,27 @@ class MainRouter(Protocol):
     def enable_tabs(self, enabled):
         self.widget.tabBar().setEnabled(enabled)
     
-    def open_script(self, parent, item):
+    def open_script(self, parent, script_name, script_path):
         assert parent is not None
-        assert item is not None
+        assert script_name is not None
+        assert script_path is not None
         
         window = QDialog(parent)
-        window.setWindowTitle(f'Run {item}')
+        window.setWindowTitle(f'Run {script_name}')
         window.setWindowFlags(window.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
         layout = QVBoxLayout()
         
-        router = OpenScriptRouter(item)
+        router = OpenScriptRouter(window, script_path)
+        router.observer = self
         router.setup()
         
         window.closeEvent = router.widget.closeEvent
         layout.addWidget(router.widget)
         window.setLayout(layout)
         window.exec()
+        
+    def on_script_closed(self, storage):
+        self.show_scripts_presenter.reload_data()
     
     def on_current_tab_changed(self, index):
         if index == 0:
@@ -83,11 +89,11 @@ class MainRouter(Protocol):
         else:
             assert False
     
-    def pick_save_file(self) -> str:
-        return self.pick_file_browser.pick_file(self.widget, "Save File", self.file_format)
+    def pick_save_file(self, directory) -> Path:
+        return self.pick_file_browser.pick_file(self.widget, "Save File", self.file_format, directory)
     
-    def configure_script(self, script_path, parent):
-        router = ConfigureScriptRouter(script_path)
+    def configure_script(self, parent, script_storage):
+        router = ConfigureScriptRouter(script_storage)
         router.setup(parent)
         router.widget.exec()
     

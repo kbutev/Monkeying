@@ -73,6 +73,7 @@ class RecordScriptWidget(QWidget):
         self.state_button.setText('Begin')
         self.state_button.clicked.disconnect()
         self.state_button.clicked.connect(lambda: self.begin_recording(sender=self))
+        self.config_button.setEnabled(True)
         self.save_button.setEnabled(True)
         
         if self.delegate is not None: self.delegate.enable_tabs(True)
@@ -98,4 +99,4 @@ class RecordScriptWidget(QWidget):
         self.table.update_data()
     
     def on_script_save(self):
-        self.config_button.setEnabled(True)
+        self.config_button.setEnabled(False)

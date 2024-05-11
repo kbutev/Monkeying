@@ -21,7 +21,6 @@ class RunScriptPresenter(Presenter):
     widget: RunScriptWidgetProtocol = None
     router: RunScriptPresenterRouter = None
     
-    working_dir: Path
     file_format: str
     
     storage = []
@@ -46,12 +45,9 @@ class RunScriptPresenter(Presenter):
     def __init__(self, script):
         super(RunScriptPresenter, self).__init__()
         
-        settings = SettingsManager.singleton
-        self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
-        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
-        
+        self.file_format = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
         storage = ScriptStorage()
-        storage.read_from_file(PathUtils.combine_paths(self.working_dir, script))
+        storage.read_from_file(script)
         self.storage = storage
         self.script = script
         
@@ -68,6 +64,7 @@ class RunScriptPresenter(Presenter):
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
         
+        self.storage.read_from_file(self.storage.file_path)
         events = list(map(lambda event: self.event_parser.parse(event), self.storage.data))
         self.widget.set_events_data(events)
         self.widget.update_progress(0, 0)
@@ -142,6 +139,9 @@ class RunScriptPresenter(Presenter):
     
     def configure_script(self):
         self.router.configure_script(self.widget)
+    
+    def update_script_configuration(self, info):
+        self.storage.info = info
     
     def enable_tabs(self, value):
         self.router.enable_tabs(value)

@@ -2,19 +2,23 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
 from ConfigureScript.ConfigureScriptPresenter import ConfigureScriptPresenter
 from ConfigureScript.ConfigureScriptWidget import ConfigureScriptWidget
+from Model.ScriptInfo import ScriptInfo
 from Service.ScriptStorage import ScriptStorage
-from Utilities.Path import Path
 
+class ConfigureScriptRouterObserver:
+    def on_exit_config_script(self, result: ScriptInfo): pass
 
 class ConfigureScriptRouter:
+    observer: ConfigureScriptRouterObserver = None
+    
     widget: QDialog = None
     
-    storage: ScriptStorage
     presenter: ConfigureScriptPresenter
     
-    def __init__(self, script_path: Path):
-        self.storage = ScriptStorage(script_path)
-        self.presenter = ConfigureScriptPresenter(self.storage)
+    completion = None
+    
+    def __init__(self, storage: ScriptStorage):
+        self.presenter = ConfigureScriptPresenter(storage)
     
     def setup(self, parent):
         dialog = QDialog(parent)
@@ -38,3 +42,7 @@ class ConfigureScriptRouter:
     
     def close(self):
         self.widget.close()
+        
+        if self.observer is not None:
+            self.observer.on_exit_config_script(self.presenter.storage.info)
+            self.observer = None

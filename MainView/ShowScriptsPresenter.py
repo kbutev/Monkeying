@@ -1,6 +1,7 @@
 from typing import Protocol
 from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
+from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField
 from Service import SettingsManager
 from Utilities import Path as PathUtils
@@ -8,7 +9,7 @@ from Utilities.Path import Path
 
 
 class ShowScriptsWidgetRouter(Protocol):
-    def open_script(self, parent, item): pass
+    def open_script(self, parent, script_name, script_path): pass
 
 class ShowScriptsPresenter(Presenter):
     widget: ShowScriptsWidgetProtocol = None
@@ -16,6 +17,9 @@ class ShowScriptsPresenter(Presenter):
     
     working_dir: Path
     file_format: str
+    
+    script_files = []
+    script_names = []
     
     def __init__(self):
         super(ShowScriptsPresenter, self).__init__()
@@ -31,16 +35,28 @@ class ShowScriptsPresenter(Presenter):
         self.setup()
     
     def setup(self):
-        files_list = PathUtils.directory_file_list(self.working_dir, self.file_format)
+        self.reload_data()
+    
+    def reload_data(self):
+        file_list = PathUtils.directory_file_list(self.working_dir, self.file_format)
         
-        print(f'command files found in working directory \'{self.working_dir}\':')
-        for file in files_list:
-            print(file)
+        # TODO: optimize
+        script_names = []
         
-        self.widget.set_data(files_list)
+        for file in file_list:
+            storage = ScriptStorage(file)
+            name = storage.info.name
+            script_names.append(name)
+        
+        self.script_files = file_list
+        self.script_names = script_names
+        self.widget.set_data(script_names)
     
     def can_open_script(self, item) -> bool:
         return True
     
-    def open_script(self, item):
-        self.router.open_script(self.widget, item)
+    def open_script(self, index):
+        assert index >= 0 and index < len(self.script_files)
+        name = self.script_names[index]
+        script_path = self.script_files[index]
+        self.router.open_script(self.widget, name, script_path)

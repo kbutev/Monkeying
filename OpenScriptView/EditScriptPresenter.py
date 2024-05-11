@@ -24,13 +24,11 @@ class EditScriptPresenter(Presenter):
     widget: EditScriptWidgetProtocol = None
     router: EditScriptPresenterRouter = None
     
-    working_dir: Path
     file_format: str
     
     storage = ScriptStorage()
     events = []
     event_descriptions = []
-    _script_path: Path
     
     event_parser: EventActionParserProtocol = EventActionParser()
     event_string_parser: EventActionToStringParserProtocol = EventActionToStringParser()
@@ -38,17 +36,13 @@ class EditScriptPresenter(Presenter):
     def __init__(self, script):
         super(EditScriptPresenter, self).__init__()
         
-        settings = SettingsManager.singleton
-        self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
-        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
-        
-        self._script_path = PathUtils.combine_paths(self.working_dir, script)
-        self.storage.read_from_file(self._script_path)
+        self.file_format = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        self.storage.read_from_file(script)
         self.events = list(map(lambda event: self.event_parser.parse_json(event), self.storage.data))
         self.setup_event_descriptions()
     
     def script_path(self) -> Path:
-        return self._script_path
+        return self.storage.file_path
     
     def start(self):
         self.update_data()
@@ -73,10 +67,14 @@ class EditScriptPresenter(Presenter):
         
         self.storage.data = storage_data
         self.storage.update_modified_date()
-        self.storage.write_to_file(self._script_path)
+        self.storage.write_to_file(self.storage.file_path)
     
     def on_configure_script(self):
         self.router.configure_script(self.widget)
+    
+    def update_script_configuration(self, info):
+        self.storage.info = info
+        self.on_save()
     
     def insert_script_action(self, event_index):
         assert 0 <= event_index
