@@ -2,9 +2,11 @@ import enum
 import json
 import os
 from typing import Protocol
+from kink import inject, di
 from pynput.keyboard import Key as KeyboardKey
 from pynput.keyboard import KeyCode as KeyboardKeyCode
 from Parser.KeyboardKeyParser import key_to_string, string_to_key
+from Utilities.Logger import LoggerProtocol
 from Utilities.Path import Path
 
 VERSION = '1.0'
@@ -15,6 +17,7 @@ ROOT = 'settings'
 KEY_VERSION = 'version'
 KEY_HOTKEYS = 'hotkeys'
 KEY_CONFIG = 'config'
+
 
 class SettingsManagerField(enum.StrEnum):
     PLAY_HOTKEY = 'play'
@@ -31,29 +34,40 @@ class SettingsManagerField(enum.StrEnum):
     def is_path(self) -> bool:
         return self == SettingsManagerField.SCRIPTS_PATH
 
+
 class SettingsManagerProtocol(Protocol):
+    def write_to_file(self, permissions='w', encoding="utf-8"): pass
+    def read_from_file(self, permissions='r', encoding="utf-8"): pass
+    
     def field_value(self, key: SettingsManagerField): pass
     def set_field_value(self, key: SettingsManagerField, value): pass
     def setup_defaults(self): pass
 
+
+@inject(alias=SettingsManagerProtocol)
 class SettingsManager:
     
-    path = Path('settings.json')
-    
-    all_values = {}
-    
-    # KeyboardKey or KeyboardKeyCode
-    hotkeys = {}
-    
-    # other string values
-    config = {}
+    # - Init
     
     def __init__(self):
+        self.path = Path('settings.json')
+        self.all_values = {}
+        self.hotkeys = {}
+        self.config = {}
+        self.logger = di[LoggerProtocol]
+        
         if self.file_exists():
             self.read_from_file()
         else:
             self.setup_defaults()
             self.write_to_file()
+    
+    # - Properties
+    
+    def get_path(self) -> Path: return self.path
+    def get_all_values(self) -> {}: return self.all_values
+    def get_hotkeys(self) -> {}: return self.hotkeys # KeyboardKey or KeyboardKeyCode
+    def get_config(self) -> {}: return self.config # other string values
     
     def field_value(self, key: SettingsManagerField):
         assert key in self.all_values
@@ -81,21 +95,8 @@ class SettingsManager:
         
         self.all_values[key] = value
     
-    def setup_defaults(self):
-        self.set_field_value(SettingsManagerField.PLAY_HOTKEY, KeyboardKey.esc)
-        self.set_field_value(SettingsManagerField.PAUSE_HOTKEY, KeyboardKey.delete)
-        self.set_field_value(SettingsManagerField.RECORD_HOTKEY, KeyboardKey.esc)
-        self.set_field_value(SettingsManagerField.SCRIPTS_PATH, SCRIPTS_DEFAULT_DIR)
-        self.set_field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT, SCRIPT_FILE_FORMAT)
-    
     def data_as_json(self):
-        data = {
-            ROOT: {
-                KEY_VERSION: VERSION,
-                KEY_HOTKEYS: self.hotkeys,
-                KEY_CONFIG: self.config
-            }
-        }
+        data = {ROOT: {KEY_VERSION: VERSION, KEY_HOTKEYS: self.hotkeys, KEY_CONFIG: self.config}}
         
         return json.dumps(data)
     
@@ -103,16 +104,25 @@ class SettingsManager:
         path = self.path.absolute
         return os.path.isfile(path)
     
+    # - Setup
+    
+    def setup_defaults(self):
+        self.set_field_value(SettingsManagerField.PLAY_HOTKEY, KeyboardKey.esc)
+        self.set_field_value(SettingsManagerField.PAUSE_HOTKEY, KeyboardKey.delete)
+        self.set_field_value(SettingsManagerField.RECORD_HOTKEY, KeyboardKey.esc)
+        self.set_field_value(SettingsManagerField.SCRIPTS_PATH, SCRIPTS_DEFAULT_DIR)
+        self.set_field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT, SCRIPT_FILE_FORMAT)
+    
     def write_to_file(self, permissions='w', encoding="utf-8"):
         path = self.path.absolute
-        print(f"write settings to \'{path}\'")
+        self.logger.info(f"write settings to \'{path}\'")
         file = open(path, permissions, encoding=encoding)
         file.write(self.data_as_json())
         file.close()
     
     def read_from_file(self, permissions='r', encoding="utf-8"):
         path = self.path.absolute
-        print(f"read settings from \'{path}\'")
+        self.logger.info(f"read settings from \'{path}\'")
         file = open(path, permissions, encoding=encoding)
         file_contents = file.read()
         
@@ -137,6 +147,3 @@ class SettingsManager:
             self.setup_defaults()
         
         file.close()
-
-# Singleton
-singleton = SettingsManager()

@@ -9,29 +9,38 @@ class EditScriptActionFieldDelegate(Protocol):
     def get_value(self): pass
     def set_value(self, value): pass
 
+
 class EditScriptActionField(QWidget):
-    delegate: EditScriptActionFieldDelegate = None
-    name = ''
-    value = None
+    
+    # - Init
     
     def __init__(self, parent=None):
         super(EditScriptActionField, self).__init__(parent)
+        self.delegate: EditScriptActionFieldDelegate = None
+        self.name = ''
+        self.value = None
     
+    # - Properties
+    
+    def get_delegate(self) -> EditScriptActionFieldDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
     def set_value(self, value): assert False
     def enable_connection(self): assert False
     def disable_connection(self): assert False
+    
+    # - Actions
+    
     def on_value_changed(self): assert False
 
+
 class EditScriptActionFieldDropDown(EditScriptActionField):
-    items = []
-    combo_box: QComboBox
-    validator = QDoubleValidator()
+    
+    # - Init
     
     def __init__(self, name: str, items, parent=None):
         super(EditScriptActionFieldDropDown, self).__init__(parent)
-        self.setup(name, items)
-    
-    def setup(self, name: str, items):
+        self.items = []
+        
         self.name = name
         
         layout = QHBoxLayout()
@@ -46,6 +55,8 @@ class EditScriptActionFieldDropDown(EditScriptActionField):
         layout.addWidget(self.combo_box)
         
         self.setLayout(layout)
+    
+    # - Properties
     
     def set_value(self, value):
         self.select_value(value)
@@ -68,11 +79,15 @@ class EditScriptActionFieldDropDown(EditScriptActionField):
     def select_value(self, value):
         self.combo_box.setCurrentIndex(self.items.index(value))
     
+    # Setup
+    
     def enable_connection(self):
         self.combo_box.currentIndexChanged.connect(self.on_value_changed)
     
     def disable_connection(self):
         self.combo_box.currentIndexChanged.disconnect()
+    
+    # Actions
     
     def on_value_changed(self):
         self.value = self.combo_box.itemText(self.selected_index())
@@ -80,13 +95,11 @@ class EditScriptActionFieldDropDown(EditScriptActionField):
 
 
 class EditScriptActionFieldBool(EditScriptActionField):
-    button: QCheckBox
+    
+    # - Init
     
     def __init__(self, name: str, parent=None):
         super(EditScriptActionFieldBool, self).__init__(parent)
-        self.setup(name)
-    
-    def setup(self, name: str):
         self.name = name
         
         layout = QHBoxLayout()
@@ -98,6 +111,8 @@ class EditScriptActionFieldBool(EditScriptActionField):
         
         self.setLayout(layout)
     
+    # - Properties
+    
     def set_value(self, value):
         self.button.setChecked(value)
     
@@ -107,32 +122,36 @@ class EditScriptActionFieldBool(EditScriptActionField):
     def disable_connection(self):
         self.button.clicked.disconnect()
     
+    # Actions
+    
     def on_value_changed(self):
         self.value = self.button.isChecked()
         self.delegate.set_value(self.value)
 
+
 class EditScriptActionFieldString(EditScriptActionField):
-    field: QLineEdit
-    validator = QRegularExpressionValidator()
+    
+    # - Init
     
     def __init__(self, name: str, parent=None):
         super(EditScriptActionFieldString, self).__init__(parent)
-        self.setup(name)
-    
-    def setup(self, name: str):
+        
         self.name = name
         
-        self.validator.setRegularExpression(QRegularExpression("^[^'\"]*$"))
+        validator = QRegularExpressionValidator()
+        validator.setRegularExpression(QRegularExpression("^[^'\"]*$"))
         
         layout = QHBoxLayout()
         
         label = QLabel(name)
         layout.addWidget(label)
         self.field = QLineEdit()
-        self.field.setValidator(self.validator)
+        self.field.setValidator(validator)
         layout.addWidget(self.field)
         
         self.setLayout(layout)
+    
+    # - Properties
     
     def set_value(self, value):
         self.set_text(value)
@@ -147,35 +166,39 @@ class EditScriptActionFieldString(EditScriptActionField):
     
     def disable_connection(self):
         self.field.textChanged.disconnect()
+    
+    # Actions
     
     def on_value_changed(self):
         self.value = self.field.text()
         self.delegate.set_value(self.value)
 
+
 class EditScriptActionFieldFloat(EditScriptActionField):
-    field: QLineEdit
-    validator = QDoubleValidator()
+    
+    # - Init
     
     def __init__(self, name: str, min, decimals, max=None, parent=None):
         super(EditScriptActionFieldFloat, self).__init__(parent)
-        self.setup(name, min, decimals, max)
-    
-    def setup(self, name: str, min, decimals, max):
+        
         self.name = name
         
         layout = QHBoxLayout()
         
-        self.validator.setBottom(min)
-        self.validator.setDecimals(decimals)
-        self.validator.setTop(max) if max is not None else None
+        validator = QDoubleValidator()
+        validator.setBottom(min)
+        validator.setDecimals(decimals)
+        validator.setTop(max) if max is not None else None
         
         label = QLabel(name)
         layout.addWidget(label)
         self.field = QLineEdit()
-        self.field.setValidator(self.validator)
+        self.field.setValidator(validator)
         layout.addWidget(self.field)
         
         self.setLayout(layout)
+    
+    # - Properties
     
     def set_value(self, value):
         self.set_text(value)
@@ -191,19 +214,21 @@ class EditScriptActionFieldFloat(EditScriptActionField):
     def disable_connection(self):
         self.field.textChanged.disconnect()
     
+    # Actions
+    
     def on_value_changed(self):
         self.value = float(self.field.text())
         self.delegate.set_value(self.value)
 
+
 class EditScriptActionFieldKeyboardChar(EditScriptActionField):
-    button: QPushButton
-    on_click = None
+    
+    # - Init
     
     def __init__(self, name: str, parent=None):
         super(EditScriptActionFieldKeyboardChar, self).__init__(parent)
-        self.setup(name)
-    
-    def setup(self, name: str):
+        
+        self.on_click = None
         self.name = name
         
         layout = QHBoxLayout()
@@ -214,6 +239,8 @@ class EditScriptActionFieldKeyboardChar(EditScriptActionField):
         layout.addWidget(self.button)
         
         self.setLayout(layout)
+    
+    # - Properties
     
     def set_value(self, value):
         self.set_text(value)
@@ -233,36 +260,35 @@ class EditScriptActionFieldKeyboardChar(EditScriptActionField):
 
 
 class EditScriptActionFieldPoint(EditScriptActionField):
-    x_field: QLineEdit
-    y_field: QLineEdit
-    validator = QDoubleValidator()
+    
+    # - Init
     
     def __init__(self, name: str, parent=None):
         super(EditScriptActionFieldPoint, self).__init__(parent)
-        self.setup(name)
-    
-    def setup(self, name: str):
         self.name = name
         
         layout = QHBoxLayout()
         
-        self.validator.setBottom(0)
-        self.validator.setDecimals(0)
+        validator = QDoubleValidator()
+        validator.setBottom(0)
+        validator.setDecimals(0)
         
         label = QLabel(name)
         layout.addWidget(label)
         
         self.x_field = QLineEdit()
         self.x_field.resize(280, 40)
-        self.x_field.setValidator(self.validator)
+        self.x_field.setValidator(validator)
         layout.addWidget(self.x_field)
         
         self.y_field = QLineEdit()
         self.y_field.resize(280, 40)
-        self.y_field.setValidator(self.validator)
+        self.y_field.setValidator(validator)
         layout.addWidget(self.y_field)
         
         self.setLayout(layout)
+    
+    # - Properties
     
     def set_value(self, point):
         self.value = point
@@ -277,6 +303,8 @@ class EditScriptActionFieldPoint(EditScriptActionField):
     def disable_connection(self):
         self.x_field.textChanged.disconnect()
         self.y_field.textChanged.disconnect()
+    
+    # - Actions
     
     def on_value_changed(self):
         self.value = Point(float(self.x_field.text()), float(self.y_field.text()))

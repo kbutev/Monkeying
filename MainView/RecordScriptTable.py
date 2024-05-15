@@ -1,9 +1,18 @@
 from PyQt5.QtWidgets import *
+from kink import inject, di
+
 from Model.InputEvent import InputEventDescription
 
 
+@inject(use_factory=True)
 class RecordScriptTableDataSource:
-    data = []
+    
+    # - Init
+    
+    def __init__(self, data=None):
+        self.data = data if data is not None else []
+    
+    # - Properties
     
     def count(self) -> int:
         return len(self.data)
@@ -22,14 +31,12 @@ class RecordScriptTableDataSource:
 class RecordScriptTable(QTableWidget):
     COLUMNS = 3
     
-    data_source: RecordScriptTableDataSource
+    # - Init
     
     def __init__(self, parent=None):
         super(RecordScriptTable, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
-        self.setColumnCount(self.COLUMNS)
+        self.data_source = di[RecordScriptTableDataSource]
+        self.setColumnCount(RecordScriptTable.COLUMNS)
         self.setRowCount(0)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -37,6 +44,13 @@ class RecordScriptTable(QTableWidget):
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
+    
+    # - Properties
+    
+    def get_data_source(self) -> RecordScriptTableDataSource: return self.data_source
+    def set_data_source(self, data_source): self.data_source = data_source
+    
+    # - Setup
     
     def update_data(self):
         if self.data_source is not None:

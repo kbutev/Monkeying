@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import *
 from typing import Protocol
-
 from OpenScriptView.EditScriptTable import EditScriptTable, EditScriptTableDataSource
 
 
@@ -9,6 +8,7 @@ class EditScriptWidgetProtocol(Protocol):
     def select_index(self, index): pass
     def select_next_index(self): pass
     def on_script_action_changed(self): pass
+
 
 class EditScriptWidgetDelegate(Protocol):
     def on_begin(self): pass
@@ -19,27 +19,19 @@ class EditScriptWidgetDelegate(Protocol):
     def delete_script_action(self, index): pass
     def edit_script_action(self, index): pass
 
+
 class EditScriptWidget(QWidget):
-    delegate: EditScriptWidgetDelegate = None
     
-    table: EditScriptTable
-    data_source = EditScriptTableDataSource()
-    
-    insert_button: QPushButton
-    delete_button: QPushButton
-    edit_button: QPushButton
-    save_button: QPushButton
-    config_button: QPushButton
+    # - Init
     
     def __init__(self, parent=None):
         super(EditScriptWidget, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        
+        self.delegate = None
+        
         layout = QVBoxLayout()
         
         self.table = EditScriptTable()
-        self.table.data_source = self.data_source
         layout.addWidget(self.table)
         
         self.insert_button = QPushButton('Insert')
@@ -66,12 +58,22 @@ class EditScriptWidget(QWidget):
         
         self.setLayout(layout)
     
+    # - Properties
+    
+    def get_delegate(self) -> EditScriptWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    def get_data_source(self) -> EditScriptTableDataSource: return self.table.data_source
+    def set_data_source(self, data_source): self.table.data_source = data_source
+    
     def set_events_data(self, data):
-        self.data_source.data = data
+        data_source = self.get_data_source()
+        data_source.data = data
         self.table.update_data()
         
-        self.delete_button.setEnabled(len(self.data_source.data) > 0)
-        self.edit_button.setEnabled(len(self.data_source.data) > 0)
+        self.delete_button.setEnabled(len(data_source.data) > 0)
+        self.edit_button.setEnabled(len(data_source.data) > 0)
+    
+    # - Actions
     
     def select_index(self, index):
         self.table.selectRow(index)
@@ -79,7 +81,7 @@ class EditScriptWidget(QWidget):
     def select_next_index(self):
         current_index = self.table.currentRow()
         
-        if current_index + 1 < self.table.data_source.count():
+        if current_index + 1 < self.get_data_source().count():
             self.table.selectRow(current_index + 1)
     
     def on_script_action_changed(self):
@@ -92,7 +94,7 @@ class EditScriptWidget(QWidget):
     
     def delete_event(self):
         self.delegate.delete_script_action(self.table.currentRow())
-        self.delete_button.setEnabled(len(self.data_source.data) > 0)
+        self.delete_button.setEnabled(len(self.get_data_source().data) > 0)
     
     def edit_event(self):
         self.delegate.edit_script_action(self.table.currentRow())

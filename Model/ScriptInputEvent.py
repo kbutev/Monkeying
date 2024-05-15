@@ -5,13 +5,17 @@ from Utilities import Path as PathUtil
 
 FLOAT_ROUND_DECIMALS = 3
 
+
 class ScriptInputEvent(InputEvent):
-    timestamp: float
-    path: Path
+    
+    # - Init
     
     def __init__(self, path: Path):
         super(ScriptInputEvent, self).__init__()
+        self.timestamp = 0
         self.path = path
+    
+    # - Properties
     
     def time(self):
         return self.timestamp

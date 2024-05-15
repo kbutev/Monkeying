@@ -1,30 +1,34 @@
 from Model.InputEvent import InputEvent
 from pynput.mouse import Button as MouseKey
-
 from Model.InputEventType import InputEventType
 from Model.KeyPressType import KeyPressType
 from Model.Point import Point
 
 FLOAT_ROUND_DECIMALS = 3
 
+
 class MouseClickEvent(InputEvent):
-    timestamp: float
-    press: KeyPressType
-    key: MouseKey
-    point: Point
+    
+    # - Init
     
     def __init__(self, press, key, point):
         super(MouseClickEvent, self).__init__()
+        self.timestamp = 0
         self.press = press
         self.key = key
+        self.point = None
         self.set_point(point)
         self.set_key(key)
+    
+    # - Properties
     
     def time(self):
         return self.timestamp
     
     def set_time(self, value):
         self.timestamp = round(value, FLOAT_ROUND_DECIMALS)
+    
+    def key_value(self): return self.key
     
     def key_as_string(self) -> str:
         return self.key.name

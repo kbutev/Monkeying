@@ -2,6 +2,10 @@
 from PyQt5.QtWidgets import QApplication
 import sys
 from MainView.MainRouter import MainRouter
+from Service.Dependencies import DependencyService
+
+# DI
+DependencyService.setup()
 
 # Primary setup
 router = MainRouter()

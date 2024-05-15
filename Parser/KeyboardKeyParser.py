@@ -1,6 +1,6 @@
-
 from pynput.keyboard import Key as KeyboardKey
 from pynput.keyboard import KeyCode as KeyboardKeyCode
+
 
 def key_to_string(key) -> str:
     if isinstance(key, KeyboardKeyCode):
@@ -9,6 +9,7 @@ def key_to_string(key) -> str:
         return str(key.name)
     else:
         assert False
+
 
 def string_to_key(value):
     if isinstance(value, KeyboardKey) or isinstance(value, KeyboardKeyCode):

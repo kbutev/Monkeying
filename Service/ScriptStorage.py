@@ -1,32 +1,45 @@
 import json
 from typing import Any
+
+from kink import di
+
 from Model.InputEvent import InputEvent
 from Model.MouseInputEvent import MouseScrollEvent
 from Model.InputEventType import InputEventType
 from Model.JSONInputEvent import POINT_NAME_GENERIC, POINT_NAME_SCROLL
 from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptInfo import ScriptInfo
-from Parser.JSONInputEventParser import JSONInputEventParser
+from Parser.JSONInputEventParser import JSONInputEventParser, JSONInputEventParserProtocol
+from Utilities.Logger import LoggerProtocol
 from Utilities.Path import Path
+
 
 JSON_DEFAULT_ROOT = 'root'
 JSON_INFO = 'info'
 JSON_CONFIGURATION = 'configuration'
 JSON_EVENTS = 'events'
 
+
 class ScriptStorage:
-    data = []
-    parser = JSONInputEventParser()
     
-    file_path: Path = None
-    info = ScriptInfo()
-    configuration = ScriptConfiguration()
-    
-    print_callback = None
+    # - Init
     
     def __init__(self, path: Path = None):
+        self.data = []
+        self.info = ScriptInfo()
+        self.configuration = ScriptConfiguration()
+        self.parser = di[JSONInputEventParserProtocol]
+        self.file_path = None
+        self.logger = di[LoggerProtocol]
         if path is not None:
             self.read_from_file(path)
+    
+    # - Properties
+    
+    def get_file_path(self) -> Path: return self.file_path
+    def set_file_path(self, path): self.file_path = path
+    
+    # - Actions
     
     def clear(self):
         self.data = []
@@ -34,7 +47,7 @@ class ScriptStorage:
         self.info = ScriptInfo()
         self.configuration = ScriptConfiguration()
         
-        print("clear data")
+        self.logger.info("clear data")
     
     def update_modified_date(self):
         self.info.update_modified_date()
@@ -48,7 +61,7 @@ class ScriptStorage:
             }
         }
         
-        return json.dumps(data, indent=self.parser.indent)
+        return json.dumps(data, indent=JSONInputEventParser.INDENT)
     
     def record(self, event: InputEvent):
         event_type = event.event_type()
@@ -97,17 +110,17 @@ class ScriptStorage:
         
         self.file_path = Path(path)
         
-        print(f"write data to \'{path}\'")
+        self.logger.info(f"write data to \'{path}\'")
         file = open(path, permissions, encoding=encoding)
         file.write(self.data_as_json(root=root))
         file.close()
-        print(f"data written {path}")
+        self.logger.info(f"data written {path}")
     
     def read_from_file(self, path, permissions='r', encoding="utf-8", root="root"):
         if isinstance(path, Path):
             path = path.absolute
         
-        print(f"read data from \'{path}\'")
+        self.logger.info(f"read data from \'{path}\'")
         
         self.clear()
         
@@ -120,8 +133,4 @@ class ScriptStorage:
         self.configuration.read_from_json(contents[JSON_CONFIGURATION])
         self.data = contents[JSON_EVENTS]
         file.close()
-        print("data read successfully")
-    
-    def print(self, string):
-        if self.print_callback is not None:
-            self.print_callback(string)
+        self.logger.info("data read successfully")

@@ -1,7 +1,10 @@
 from PyQt5.QtWidgets import *
 from typing import Protocol
 
+from kink import di
+
 from OpenScriptView.RunScriptTable import RunScriptTable, RunScriptTableDataSource
+from Utilities.Logger import LoggerProtocol
 
 
 class RunScriptWidgetProtocol(Protocol):
@@ -11,6 +14,7 @@ class RunScriptWidgetProtocol(Protocol):
     def stop_script(self, sender): pass
     def set_events_data(self, data): pass
     def update_progress(self, index, percentage: int): pass
+
 
 class RunScriptWidgetDelegate(Protocol):
     def is_script_active(self) -> bool: return False
@@ -22,26 +26,19 @@ class RunScriptWidgetDelegate(Protocol):
     def configure_script(self): pass
     def enable_tabs(self, value): pass
 
+
 class RunScriptWidget(QWidget):
-    delegate: RunScriptWidgetDelegate = None
     
-    table: RunScriptTable
-    data_source = RunScriptTableDataSource()
-    
-    progress_bar: QProgressBar
-    state_button: QPushButton
-    pause_button: QPushButton
-    config_button: QPushButton
+    # - Init
     
     def __init__(self, parent=None):
         super(RunScriptWidget, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        
+        self.delegate = None
+        
         layout = QVBoxLayout()
         
         self.table = RunScriptTable()
-        self.table.data_source = self.data_source
         layout.addWidget(self.table)
         
         self.progress_bar = QProgressBar(self)
@@ -61,6 +58,17 @@ class RunScriptWidget(QWidget):
         self.config_button.clicked.connect(self.configure_script)
         
         self.setLayout(layout)
+        
+        self.logger = di[LoggerProtocol]
+    
+    # - Properties
+    
+    def get_delegate(self) -> RunScriptWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    def get_data_source(self) -> RunScriptTableDataSource: return self.table.data_source
+    def set_data_source(self, data_source): self.table.data_source = data_source
+    
+    # - Actions
     
     def run_script(self, sender):
         self.state_button.setText('Stop')
@@ -125,15 +133,16 @@ class RunScriptWidget(QWidget):
         self.pause_button.clicked.connect(lambda: self.resume_script(sender=self))
     
     def set_events_data(self, data):
-        self.data_source.data = data
+        data_source = self.get_data_source()
+        data_source.data = data
         self.table.update_data()
         
-        self.state_button.setEnabled(len(self.data_source.data) > 0)
+        self.state_button.setEnabled(len(data_source.data) > 0)
     
     def update_progress(self, index, percentage: int):
-        count = len(self.data_source.data)
+        count = len(self.get_data_source().data)
         
-        #print(f'update_events index={index}/{count} progress={percentage}/100')
+        #self.logger.debug(f'update_events index={index}/{count} progress={percentage}/100')
         
         if index >= count:
             index = count-1

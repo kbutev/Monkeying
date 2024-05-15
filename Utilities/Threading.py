@@ -1,5 +1,5 @@
-
 from PyQt5 import QtCore
+
 
 class ThreadSignal(QtCore.QObject):
     ''' Why a whole new class? See here: 

@@ -1,7 +1,6 @@
 from typing import Protocol
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
-
 from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresenter
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
 from EditScriptAction.EditScriptActionPresenter import EditScriptActionPresenter
@@ -11,17 +10,17 @@ from OpenScriptView.EditScriptPresenter import EditScriptPresenter
 
 
 class EditScriptActionRouter(Protocol):
-    widget: QDialog = None
     
-    is_insert = False
-    edit_action_presenter: EditScriptActionPresenter
-    edit_script_presenter: EditScriptPresenter
+    # - Init
     
-    def __init__(self, is_insert, event_index, input_event: InputEvent, edit_script_presenter):
+    def __init__(self, is_insert: bool, event_index, input_event: InputEvent, edit_script_presenter: EditScriptPresenter):
+        self.widget = None
         self.is_insert = is_insert
-        script_path = edit_script_presenter.script_path()
+        script_path = edit_script_presenter.get_script_path()
         self.edit_action_presenter = EditScriptActionPresenter(script_path, event_index, input_event)
         self.edit_script_presenter = edit_script_presenter
+    
+    # - Setup
     
     def setup(self, parent):
         dialog = QDialog(parent)
@@ -33,15 +32,17 @@ class EditScriptActionRouter(Protocol):
         
         layout = QVBoxLayout()
         widget = EditScriptActionWidget()
-        widget.delegate = self.edit_action_presenter
-        self.edit_action_presenter.router = self
-        self.edit_action_presenter.widget = widget
+        widget.set_delegate(self.edit_action_presenter)
+        self.edit_action_presenter.set_router(self)
+        self.edit_action_presenter.set_widget(widget)
         layout.addWidget(widget)
         self.edit_action_presenter.start()
         
         dialog.setLayout(layout)
         
         self.widget = dialog
+    
+    # - Actions
     
     def prompt_choose_key_dialog(self, sender):
         dialog = QDialog(self.widget)
@@ -54,7 +55,7 @@ class EditScriptActionRouter(Protocol):
         layout = QVBoxLayout()
         widget = ChooseKeyboardKeyWidget()
         presenter = ChooseKeyboardKeyPresenter(lambda result: self.on_key_chosen(sender, dialog, result))
-        widget.delegate = presenter
+        widget.set_delegate(presenter)
         layout.addWidget(widget)
         presenter.start()
         dialog.setLayout(layout)

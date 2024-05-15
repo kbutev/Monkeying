@@ -1,6 +1,7 @@
 from typing import Protocol
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
+from kink import di
 from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresenter
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
 from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
@@ -9,44 +10,49 @@ from MainView.SettingsPresenter import SettingsPresenter
 from OpenScriptView.OpenScriptRouter import OpenScriptRouter
 from MainView.ShowScriptsPresenter import ShowScriptsPresenter
 from MainView.RecordScriptPresenter import RecordScriptPresenter
-from Service.PickFileBrowser import PickFileBrowserProtocol, PickFileBrowser
-from Service.SettingsManager import SettingsManagerField
-from Service import SettingsManager
+from Service.PickFileBrowser import PickFileBrowser
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Utilities.Path import Path
 
 
 class MainRouter(Protocol):
-    widget: MainWidget
-    show_scripts_presenter = ShowScriptsPresenter()
-    rec_presenter = RecordScriptPresenter()
-    settings_presenter = SettingsPresenter()
     
-    pick_file_browser: PickFileBrowserProtocol = PickFileBrowser()
-    
-    file_format: str
+    # - Init
     
     def __init__(self):
-        settings = SettingsManager.singleton
+        settings = di[SettingsManagerProtocol]
+        self.widget = None
+        self.pick_file_browser = di[PickFileBrowser]
         self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        self.show_scripts_presenter = ShowScriptsPresenter()
+        self.rec_presenter = RecordScriptPresenter()
+        self.settings_presenter = SettingsPresenter()
+    
+    # - Properties
+    
+    def get_widget(self) -> MainWidget: return self.widget
+    
+    # - Setup
     
     def setup(self):
         self.widget = MainWidget()
-        self.widget.scripts_widget.delegate = self.show_scripts_presenter
-        self.widget.scripts_widget.router = self
-        self.widget.rec_widget.delegate = self.rec_presenter
-        self.widget.rec_widget.router = self
-        self.widget.settings_widget.delegate = self.settings_presenter
-        self.widget.settings_widget.router = self
-        self.widget.delegate = self
+        self.widget.scripts_widget.set_delegate(self.show_scripts_presenter)
+        self.widget.rec_widget.set_delegate(self.rec_presenter)
+        self.widget.settings_widget.set_delegate(self.settings_presenter)
+        self.widget.set_delegate(self)
         
-        self.show_scripts_presenter.widget = self.widget.scripts_widget
-        self.show_scripts_presenter.router = self
-        self.rec_presenter.widget = self.widget.rec_widget
-        self.rec_presenter.router = self
-        self.settings_presenter.widget = self.widget.settings_widget
-        self.settings_presenter.router = self
+        self.show_scripts_presenter.set_widget(self.widget.scripts_widget)
+        self.show_scripts_presenter.set_router(self)
+        
+        self.rec_presenter.set_widget(self.widget.rec_widget)
+        self.rec_presenter.set_router(self)
+        
+        self.settings_presenter.set_widget(self.widget.settings_widget)
+        self.settings_presenter.set_router(self)
         
         self.show_scripts_presenter.start()
+    
+    # - Actions
     
     def enable_tabs(self, enabled):
         self.widget.tabBar().setEnabled(enabled)
@@ -108,7 +114,7 @@ class MainRouter(Protocol):
         layout = QVBoxLayout()
         widget = ChooseKeyboardKeyWidget()
         presenter = ChooseKeyboardKeyPresenter(lambda result: self.on_key_chosen(sender, dialog, result))
-        widget.delegate = presenter
+        widget.set_delegate(presenter)
         layout.addWidget(widget)
         presenter.start()
         dialog.setLayout(layout)

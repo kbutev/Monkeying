@@ -1,10 +1,10 @@
 from typing import Protocol
-
 from ConfigureScript.ConfigureScriptWidget import ConfigureScriptWidgetProtocol
-from Service.ScriptStorage import ScriptStorage
+
 
 class ConfigureScriptPresenterRouter(Protocol):
     def close(self): pass
+
 
 class ConfigureScriptPresenterProtocol(Protocol):
     def on_name_changed(self, value): pass
@@ -14,13 +14,24 @@ class ConfigureScriptPresenterProtocol(Protocol):
     def on_notify_on_start_changed(self, value): pass
     def on_notify_on_end_changed(self, value): pass
 
+
 class ConfigureScriptPresenter:
-    widget: ConfigureScriptWidgetProtocol
-    router: ConfigureScriptPresenterRouter = None
-    storage: ScriptStorage
+    
+    # - Init
     
     def __init__(self, storage):
+        self.widget = None
+        self.router = None
         self.storage = storage
+    
+    # - Properties
+    
+    def get_widget(self) -> ConfigureScriptWidgetProtocol: return self.widget
+    def set_widget(self, widget): self.widget = widget
+    def get_router(self) -> ConfigureScriptPresenterRouter: return self.router
+    def set_router(self, router): self.router = router
+    
+    # - Setup
     
     def start(self):
         assert self.widget is not None
@@ -31,6 +42,8 @@ class ConfigureScriptPresenter:
         self.widget.set_repeat_forever(self.storage.configuration.repeat_forever)
         self.widget.set_notify_start_check(self.storage.configuration.notify_on_start)
         self.widget.set_notify_end_check(self.storage.configuration.notify_on_end)
+    
+    # - Actions
     
     def on_name_changed(self, value):
         self.storage.info.name = value

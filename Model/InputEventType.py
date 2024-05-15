@@ -14,6 +14,8 @@ class InputEventType(enum.StrEnum):
     MESSAGE = "action.message"
     RUN_SCRIPT = "action.run_script"
     
+    # - Helpers
+    
     def is_keyboard(self) -> bool:
         return (self == InputEventType.KEYBOARD_PRESS or 
                 self == InputEventType.KEYBOARD_RELEASE or

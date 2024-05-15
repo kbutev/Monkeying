@@ -1,7 +1,9 @@
-from PyQt5.QtWidgets import *
+from kink import inject, di
+
 from MainView.RecordScriptTable import RecordScriptTableDataSource, RecordScriptTable
 
 
+@inject(use_factory=True)
 class RunScriptTableDataSource(RecordScriptTableDataSource):
     pass
 
@@ -9,7 +11,5 @@ class RunScriptTableDataSource(RecordScriptTableDataSource):
 class RunScriptTable(RecordScriptTable):
     def __init__(self, parent=None):
         super(RunScriptTable, self).__init__(parent)
-        
-    def setup(self):
-        super(RunScriptTable, self).setup()
+        self.data_source = di[RunScriptTableDataSource]
 

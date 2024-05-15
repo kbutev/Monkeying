@@ -1,17 +1,18 @@
 import enum
 import threading
-
 from PyQt5.QtCore import QThread
-from Model.ScriptConfiguration import ScriptConfiguration
-from Service import OSNotificationCenter
+from kink import di
+from Service.OSNotificationCenter import OSNotificationCenterProtocol
 from Service.ScriptStorage import ScriptStorage
-from Service.Work.EventExecution import ScriptExecution
-from Service.Work.EventExecutionBuilder import EventExecutionBuilder
-from Utilities.Path import Path
+from Service.Work.EventExecutionBuilder import EventExecutionBuilderProtocol
+from Service.Work.EventExecutionCluster import ScriptExecution
+from Utilities.Logger import LoggerProtocol
+
 
 NOTIFICATION_TITLE = 'Monkeying'
 WAIT_INTERVAL = 2 # Time to wait (in ms) when idle
 WAIT_INTERVAL_WHEN_PAUSED = 10
+
 
 class ScriptSimulationWorkerState(enum.IntEnum):
     IDLE = 0
@@ -19,28 +20,25 @@ class ScriptSimulationWorkerState(enum.IntEnum):
     PAUSED = 2
     FINISHED = 3
 
+
 class ScriptSimulationWorker(QThread):
-    _state = ScriptSimulationWorkerState.IDLE
-    _cancelled = False
     
-    script_name: str
-    script_path: Path
-    events = []
-    current_execution: ScriptExecution = None
-    execution_count = 0
-    execution_limit = 1
-    configuration: ScriptConfiguration
-    
-    lock = threading.Lock()
-    
-    print_callback = None
+    # - Init
     
     def __init__(self, storage: ScriptStorage, event_parser):
         super(ScriptSimulationWorker, self).__init__()
+        
+        self.lock = threading.Lock()
+        
+        self._state = ScriptSimulationWorkerState.IDLE
+        self._cancelled = False
+        
         self.script_name = storage.info.name
         self.script_path = storage.file_path
         self.events = list(map(lambda event: event_parser.parse_json(event), storage.data.copy()))
         self.configuration = storage.configuration
+        
+        self.execution_count = 0
         
         if self.configuration.repeat_forever:
             self.execution_limit = None
@@ -48,6 +46,10 @@ class ScriptSimulationWorker(QThread):
             self.execution_limit = 1 + self.configuration.repeat_count
         
         self.current_execution = self.build_execution_script()
+        
+        self.logger = di[LoggerProtocol]
+    
+    # - Properties
     
     def state(self) -> ScriptSimulationWorkerState:
         with self.lock:
@@ -80,14 +82,17 @@ class ScriptSimulationWorker(QThread):
         return self.current_execution.duration()
     
     def build_execution_script(self) -> ScriptExecution:
-        return ScriptExecution(self.script_path, self.events.copy(), EventExecutionBuilder())
+        return ScriptExecution(self.script_path, self.events.copy(), di[EventExecutionBuilderProtocol])
+    
+    def notification_center(self) -> OSNotificationCenterProtocol:
+        return di[OSNotificationCenterProtocol]
+    
+    # - Actions
     
     def run(self):
         assert self._state is ScriptSimulationWorkerState.IDLE
         
-        print('EventSimulatorWorker started')
-        
-        self.current_execution.print_callback = self.print_callback
+        self.logger.info('EventSimulatorWorker started')
         
         with self.lock:
             self._state = ScriptSimulationWorkerState.RUNNING
@@ -111,9 +116,9 @@ class ScriptSimulationWorker(QThread):
         self.show_end_notification()
         
         if not self.is_cancelled():
-            self.print('EventSimulatorWorker ended')
+            self.logger.info('EventSimulatorWorker ended')
         else:
-            self.print('EventSimulatorWorker cancelled')
+            self.logger.info('EventSimulatorWorker cancelled')
     
     def cancel(self):
         with self.lock:
@@ -153,14 +158,10 @@ class ScriptSimulationWorker(QThread):
         if not self.configuration.notify_on_start:
             return
         
-        OSNotificationCenter.singleton.show(NOTIFICATION_TITLE, f'{self.script_name} started')
+        self.notification_center().show(NOTIFICATION_TITLE, f'{self.script_name} started')
     
     def show_end_notification(self):
         if not self.configuration.notify_on_end:
             return
         
-        OSNotificationCenter.singleton.show(NOTIFICATION_TITLE, f'{self.script_name} ended')
-    
-    def print(self, message):
-        if self.print_callback is not None:
-            self.print_callback(message)
+        self.notification_center().show(NOTIFICATION_TITLE, f'{self.script_name} ended')

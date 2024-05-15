@@ -2,10 +2,16 @@ import time
 
 
 class Timer:
-    running = False
-    paused = False
-    start_time = 0
-    bonus_elapsed_time = 0
+    
+    # - Init
+    
+    def __init__(self):
+        self.running = False
+        self.paused = False
+        self.start_time = 0
+        self.bonus_elapsed_time = 0
+    
+    # - Properties
     
     def is_running(self) -> bool:
         return self.running
@@ -18,6 +24,8 @@ class Timer:
             return self.bonus_elapsed_time
         
         return (time.time() - self.start_time) + self.bonus_elapsed_time
+    
+    # - Actions
     
     def start(self):
         assert not self.is_running()

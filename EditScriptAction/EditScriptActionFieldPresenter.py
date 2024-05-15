@@ -1,23 +1,24 @@
 from EditScriptAction.EditScriptActionField import EditScriptActionFieldDelegate
 
 
+def no_parse(value): return value
+
+
 class EditScriptActionFieldPresenterProtocol(EditScriptActionFieldDelegate):
     def start(self, field): pass
 
+
 class EditScriptActionFieldPresenter(EditScriptActionFieldPresenterProtocol):
-    getter = None
-    setter = None
-    value_parser = None
+    
+    # - Init
     
     def __init__(self, getter, setter=None):
         super(EditScriptActionFieldPresenter, self).__init__()
         self.getter = getter
         self.setter = setter
-        self.value_parser = self.no_parse
+        self.value_parser = no_parse
     
-    def start(self, field):
-        assert self.getter is not None
-        field.set_value(self.getter())
+    # - Properties
     
     def get_value(self):
         return self.value_parser(self.getter())
@@ -26,5 +27,8 @@ class EditScriptActionFieldPresenter(EditScriptActionFieldPresenterProtocol):
         if self.setter is not None:
             self.setter(self.value_parser(value))
     
-    def no_parse(self, value):
-        return value
+    # - Setup
+    
+    def start(self, field):
+        assert self.getter is not None
+        field.set_value(self.getter())

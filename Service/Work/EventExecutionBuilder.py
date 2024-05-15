@@ -1,26 +1,31 @@
+from typing import Protocol
+from kink import di, inject
 from Model.InputEvent import InputEvent
 from Model.MessageInputEvent import MessageInputEvent
 from Model.ScriptInputEvent import ScriptInputEvent
-from Parser.EventActionParser import EventActionParserProtocol, EventActionParser
-from Service import SettingsManager
+from Parser.EventActionParser import EventActionParserProtocol
 from Service.ScriptStorage import ScriptStorage
-from Service.SettingsManager import SettingsManagerField
-from Service.Work.EventExecution import EventKeyExecution, ScriptExecution, EventMessageExecution
-from Utilities.Path import Path
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
+from Service.Work.EventExecutionCluster import EventMessageExecution, ScriptExecution, EventKeyExecution
 
 
+class EventExecutionBuilderProtocol(Protocol):
+    def build(self, event: InputEvent): pass
+
+
+@inject(use_factory=True, alias=EventExecutionBuilderProtocol)
 class EventExecutionBuilder:
-    working_dir: Path
-    event_parser: EventActionParserProtocol = EventActionParser()
     
     def __init__(self):
-        self.working_dir = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_PATH)
+        settings = di[SettingsManagerProtocol]
+        self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+        self.event_parser = di[EventActionParserProtocol]
     
-    def build(self, input_event: InputEvent, print_callback = None):
+    def build(self, input_event: InputEvent):
         event_type = input_event.event_type()
         
         if event_type.is_keyboard() or event_type.is_mouse():
-            result = EventKeyExecution(input_event, print_callback)
+            result = EventKeyExecution(input_event)
         elif isinstance(input_event, MessageInputEvent):
             result = EventMessageExecution(input_event)
         elif isinstance(input_event, ScriptInputEvent):
@@ -31,7 +36,5 @@ class EventExecutionBuilder:
             result = ScriptExecution(script_file_path, events, self)
         else:
             assert False
-        
-        result.print_callback = print_callback
         
         return result

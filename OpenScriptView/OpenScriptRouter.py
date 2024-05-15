@@ -1,6 +1,5 @@
 from typing import Protocol
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
-
 from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
 from EditScriptAction.EditScriptActionRouter import EditScriptActionRouter
 from Model.ScriptInfo import ScriptInfo
@@ -12,35 +11,41 @@ from OpenScriptView.RunScriptPresenter import RunScriptPresenter
 class OpenScriptRouterObserver(Protocol):
     def on_script_closed(self, storage): pass
 
+
 class OpenScriptRouter(Protocol):
-    observer: OpenScriptRouterObserver = None
     
-    parent: QDialog
-    widget: OpenScriptWidget = None
-    edit_script_presenter: EditScriptPresenter
-    run_script_presenter: RunScriptPresenter
-    
-    current_dialog: QDialog = None
+    # - Init
     
     def __init__(self, parent, script):
+        self.observer = None
         self.parent = parent
+        self.widget = OpenScriptWidget()
         self.edit_script_presenter = EditScriptPresenter(script)
         self.run_script_presenter = RunScriptPresenter(script)
+        self.current_dialog = None
+    
+    # - Properties
+    
+    def get_observer(self) -> OpenScriptRouterObserver: return self.observer
+    def set_observer(self, observer): self.observer = observer
+    
+    # - Setup
     
     def setup(self):
-        self.widget = OpenScriptWidget()
-        self.widget.delegate = self
+        self.widget.set_delegate(self)
         
-        self.widget.run_widget.delegate = self.run_script_presenter
-        self.run_script_presenter.widget = self.widget.run_widget
-        self.run_script_presenter.router = self
+        self.widget.run_widget.set_delegate(self.run_script_presenter)
+        self.run_script_presenter.set_widget(self.widget.run_widget)
+        self.run_script_presenter.set_router(self)
         
-        self.widget.edit_widget.delegate = self.edit_script_presenter
-        self.edit_script_presenter.widget = self.widget.edit_widget
-        self.edit_script_presenter.router = self
+        self.widget.edit_widget.set_delegate(self.edit_script_presenter)
+        self.edit_script_presenter.set_widget(self.widget.edit_widget)
+        self.edit_script_presenter.set_router(self)
         
         self.run_script_presenter.start()
         self.edit_script_presenter.start()
+    
+    # - Actions
     
     def enable_tabs(self, enabled):
         self.widget.tabBar().setEnabled(enabled)
@@ -54,8 +59,8 @@ class OpenScriptRouter(Protocol):
         layout = QVBoxLayout()
         
         script_widget = OpenScriptWidget()
-        script_widget.run_widget.delegate = self.run_script_presenter
-        self.run_script_presenter.widget = script_widget.run_widget
+        script_widget.run_widget.set_delegate(self.run_script_presenter)
+        self.run_script_presenter.set_widget(script_widget.run_widget)
         
         layout.addWidget(script_widget)
         current_dialog.setLayout(layout)

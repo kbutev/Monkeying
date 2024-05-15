@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import *
 from typing import Protocol
-
 from MainView.RecordScriptTable import RecordScriptTable, RecordScriptTableDataSource
 
 
@@ -11,6 +10,7 @@ class RecordScriptWidgetProtocol(Protocol):
     def set_events_data(self, data): pass
     def on_script_save(self): pass
 
+
 class RecordWidgetDelegate(Protocol):
     def begin_recording(self, sender): pass
     def stop_recording(self, sender): pass
@@ -18,25 +18,19 @@ class RecordWidgetDelegate(Protocol):
     def save_recording(self): pass
     def enable_tabs(self, value): pass
 
+
 class RecordScriptWidget(QWidget):
-    delegate: RecordWidgetDelegate = None
     
-    table: RecordScriptTable
-    data_source = RecordScriptTableDataSource()
-    
-    state_button: QPushButton
-    save_button: QPushButton
-    config_button: QPushButton
+    # - Init
     
     def __init__(self, parent=None):
         super(RecordScriptWidget, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        
+        self.delegate = None
+        
         layout = QVBoxLayout()
         
         self.table = RecordScriptTable()
-        self.table.data_source = self.data_source
         layout.addWidget(self.table)
         
         self.state_button = QPushButton('Begin')
@@ -55,6 +49,15 @@ class RecordScriptWidget(QWidget):
         self.save_button.clicked.connect(self.save_recording)
         
         self.setLayout(layout)
+    
+    # - Properties
+    
+    def get_delegate(self) -> RecordWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    def get_data_source(self) -> RecordScriptTableDataSource: return self.table.data_source
+    def set_data_source(self, data_source): self.table.data_source = data_source
+    
+    # - Actions
     
     def begin_recording(self, sender):
         self.state_button.setText('Stop')
@@ -95,7 +98,7 @@ class RecordScriptWidget(QWidget):
         self.save_button.setEnabled(False)
     
     def set_events_data(self, data):
-        self.data_source.data = data
+        self.get_data_source().data = data
         self.table.update_data()
     
     def on_script_save(self):

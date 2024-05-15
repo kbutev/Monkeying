@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from typing import Protocol
+from kink import inject
 from Model.InputEvent import InputEventDescription, InputEvent
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
@@ -13,6 +15,8 @@ class EventActionParserProtocol(Protocol):
     def parse_json(self, json) -> InputEvent: pass
     def parse_input_event(self, input_event: InputEvent) -> JSONInputEvent: pass
 
+
+@inject(use_factory=True, alias=EventActionParserProtocol)
 class EventActionParser(EventActionParserProtocol):
     
     def parse_json(self, json) -> InputEvent:
@@ -75,33 +79,35 @@ class EventActionParser(EventActionParserProtocol):
         
         return result
 
+
+@dataclass
 class EventActionToStringParserGrouping:
     type: InputEventType
     
-    def __init__(self, type):
-        self.type = type
-    
     def match_event(self, event):
         return event.event_type() == self.type
+
 
 class EventActionToStringParserProtocol(Protocol):
     def parse(self, event) -> InputEventDescription: pass
     def parse_list(self, events, group_options: EventActionToStringParserGrouping = None) -> [InputEventDescription]: pass
 
+
+@inject(use_factory=True, alias=EventActionToStringParserProtocol)
 class EventActionToStringParser(EventActionToStringParserProtocol):
-    inner_parser: EventActionParserProtocol = EventActionParser()
+    
+    def __init__(self):
+        self.inner_parser: EventActionParserProtocol = EventActionParser()
     
     def parse(self, event) -> InputEventDescription:
         if not isinstance(event, InputEvent):
             event = self.inner_parser.parse_json(event)
-        
-        result = InputEventDescription()
-        
+
         input_event: InputEvent = event
-        result.timestamp = "{:.3f}".format(input_event.time())
-        result.type = input_event.event_type().name
-        result.value = input_event.value_as_string()
-        
+        timestamp = "{:.3f}".format(input_event.time())
+        type = input_event.event_type().name
+        value = input_event.value_as_string()
+        result = InputEventDescription(timestamp, type, value)
         return result
     
     def parse_list(self, events, group_options: EventActionToStringParserGrouping = None) -> [InputEventDescription]:
@@ -125,5 +131,4 @@ class EventActionToStringParser(EventActionToStringParserProtocol):
             previous_events.append(new_event)
         
         return result
-
 

@@ -5,20 +5,29 @@ from ConfigureScript.ConfigureScriptWidget import ConfigureScriptWidget
 from Model.ScriptInfo import ScriptInfo
 from Service.ScriptStorage import ScriptStorage
 
+
 class ConfigureScriptRouterObserver:
     def on_exit_config_script(self, result: ScriptInfo): pass
 
+
 class ConfigureScriptRouter:
-    observer: ConfigureScriptRouterObserver = None
     
-    widget: QDialog = None
-    
-    presenter: ConfigureScriptPresenter
-    
-    completion = None
+    # - Init
     
     def __init__(self, storage: ScriptStorage):
+        self.observer = None
+        self.widget = None
         self.presenter = ConfigureScriptPresenter(storage)
+        self.completion = None
+    
+    # - Properties
+    
+    def get_widget(self) -> QDialog: return self.widget
+    def set_widget(self, widget): self.widget = widget
+    def get_observer(self) -> ConfigureScriptRouterObserver: return self.observer
+    def set_observer(self, observer): self.observer = observer
+    
+    # - Setup
     
     def setup(self, parent):
         dialog = QDialog(parent)
@@ -30,15 +39,17 @@ class ConfigureScriptRouter:
         
         layout = QVBoxLayout()
         widget = ConfigureScriptWidget()
-        widget.delegate = self.presenter
-        self.presenter.widget = widget
-        self.presenter.router = self
+        widget.set_delegate(self.presenter)
+        self.presenter.set_widget(widget)
+        self.presenter.set_router(self)
         layout.addWidget(widget)
         self.presenter.start()
         
         dialog.setLayout(layout)
         
         self.widget = dialog
+    
+    # - Actions
     
     def close(self):
         self.widget.close()

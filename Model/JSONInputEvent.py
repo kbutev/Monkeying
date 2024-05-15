@@ -16,8 +16,10 @@ ENTRY_PATH = "path"
 POINT_NAME_GENERIC = '0'
 POINT_NAME_SCROLL = '1'
 
+
 class JSONInputEvent:
-    values: dict
+    
+    # - Init
     
     def __init__(self, values = None):
         if isinstance(values, dict):
@@ -27,10 +29,14 @@ class JSONInputEvent:
         else:
             self.values = dict()
     
+    # - Setup
+    
     def set_defaults(self, type):
         self.set_type(type)
         self.set_keystroke('x' if self.type().is_keyboard() else MouseKey.left.name)
         self.set_path('')
+    
+    # - Properties
     
     def time(self) -> float:
         return float(self.values[ENTRY_TIME])

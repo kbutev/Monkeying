@@ -1,7 +1,9 @@
-from PyQt5.QtWidgets import *
+from kink import inject, di
+
 from MainView.RecordScriptTable import RecordScriptTableDataSource, RecordScriptTable
 
 
+@inject(use_factory=True)
 class EditScriptTableDataSource(RecordScriptTableDataSource):
     pass
 
@@ -9,7 +11,5 @@ class EditScriptTableDataSource(RecordScriptTableDataSource):
 class EditScriptTable(RecordScriptTable):
     def __init__(self, parent=None):
         super(EditScriptTable, self).__init__(parent)
-    
-    def setup(self):
-        super(EditScriptTable, self).setup()
+        self.data_source = di[EditScriptTableDataSource]
 

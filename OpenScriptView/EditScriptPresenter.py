@@ -1,14 +1,12 @@
 from typing import Protocol
+from kink import di
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from OpenScriptView.EditScriptWidget import EditScriptWidgetProtocol
-from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser, \
-    EventActionParserProtocol, EventActionParser
+from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionParserProtocol
 from Presenter.Presenter import Presenter
 from Service.ScriptStorage import ScriptStorage
-from Service.SettingsManager import SettingsManagerField
-from Service import SettingsManager
-from Utilities import Path as PathUtils
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Utilities.Path import Path
 
 INSERT_EVENT_TIME_ADVANCE = 0.1 # When inserting a new event, it's time is based on the currently selected event plus this value
@@ -21,36 +19,50 @@ class EditScriptPresenterRouter(Protocol):
     def on_save_edit_script_action(self, event_index, input_event): pass
 
 class EditScriptPresenter(Presenter):
-    widget: EditScriptWidgetProtocol = None
-    router: EditScriptPresenterRouter = None
     
-    file_format: str
-    
-    storage = ScriptStorage()
-    events = []
-    event_descriptions = []
-    
-    event_parser: EventActionParserProtocol = EventActionParser()
-    event_string_parser: EventActionToStringParserProtocol = EventActionToStringParser()
+    # Init
     
     def __init__(self, script):
         super(EditScriptPresenter, self).__init__()
         
-        self.file_format = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        self.widget = None
+        self.router = None
+        settings: SettingsManagerProtocol = di[SettingsManagerProtocol]
+        self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        self.storage = ScriptStorage()
         self.storage.read_from_file(script)
+        self.event_descriptions = []
+        self.event_parser = di[EventActionParserProtocol]
+        self.event_string_parser = di[EventActionToStringParserProtocol]
         self.events = list(map(lambda event: self.event_parser.parse_json(event), self.storage.data))
         self.setup_event_descriptions()
     
-    def script_path(self) -> Path:
-        return self.storage.file_path
+    # Properties
+    
+    def get_widget(self) -> EditScriptWidgetProtocol: return self.widget
+    def set_widget(self, widget): self.widget = widget
+    def get_router(self) -> EditScriptPresenterRouter: return self.router
+    def set_router(self, router): self.router = router
+    def get_file_format(self) -> str: return self.file_format
+    def get_events(self) -> []: return self.events
+    def get_event_descriptions(self) -> []: return self.event_descriptions
+    def get_script_path(self) -> Path: return self.storage.file_path
+    
+    # Actions
     
     def start(self):
+        assert self.widget is not None
+        assert self.router is not None
+        
         self.update_data()
     
     def stop(self):
         pass
     
     def update_data(self):
+        assert self.widget is not None
+        assert self.router is not None
+        
         self.events.sort()
         self.setup_event_descriptions()
         self.widget.set_events_data(self.event_descriptions)
@@ -118,5 +130,4 @@ class EditScriptPresenter(Presenter):
         
         self.events[event_index] = input_event
         self.update_data()
-        
 

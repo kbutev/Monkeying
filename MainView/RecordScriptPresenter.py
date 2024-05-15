@@ -1,16 +1,17 @@
 import time
+from kink import di
 from typing import Protocol
 from PyQt5.QtCore import QTimer
 from Model.InputEventType import InputEventType
-from Parser.EventActionParser import EventActionToStringParser, EventActionToStringParserProtocol, \
-    EventActionToStringParserGrouping
+from Parser.EventActionParser import EventActionToStringParser, EventActionToStringParserGrouping, \
+    EventActionToStringParserProtocol
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventMonitorManager import EventMonitorManager
 from MainView.RecordScriptWidget import RecordScriptWidgetProtocol
 from Service.ScriptStorage import ScriptStorage
-from Service.SettingsManager import SettingsManagerField
-from Service import SettingsManager
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
+from Utilities.Logger import LoggerProtocol
 from Utilities.Path import Path
 
 
@@ -20,45 +21,49 @@ class RecordScriptPresenterRouter(Protocol):
     def configure_script(self, script_path, parent): pass
 
 class RecordScriptPresenter(Presenter):
-    router: RecordScriptPresenterRouter = None
-    widget: RecordScriptWidgetProtocol = None
     
-    storage = ScriptStorage()
-    event_monitor = EventMonitorManager(storage)
-    keyboard_monitor = KeyboardEventMonitor()
-    
-    running = False
-    
-    file_format = '.json'
-    
-    trigger_key = None
-    
-    events_data = []
-    
-    event_parser: EventActionToStringParserProtocol = EventActionToStringParser()
-    
-    update_timer: QTimer
-    
-    # When used, the hotkey is suspended for a short period
-    hotkey_click_time = 0
-    hotkey_suspend_interval = 0.5
+    # - Init
     
     def __init__(self):
         super(RecordScriptPresenter, self).__init__()
-        self.event_monitor.delegate = self
+        
+        self.router = None
+        self.widget = None
+        self.settings = di[SettingsManagerProtocol]
+        self.storage = ScriptStorage()
+        self.event_monitor = EventMonitorManager(self.storage)
+        self.keyboard_monitor = di[KeyboardEventMonitor]
+        self.running = False
+        self.file_format = '.json'
+        self.trigger_key = None
+        self.events_data = []
+        self.event_parser = di[EventActionToStringParserProtocol]
+        
+        # When used, the hotkey is suspended for a short period
+        self.hotkey_click_time = 0
+        self.hotkey_suspend_interval = 0.5
         
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(False)
         self.update_timer.setInterval(100)
         self.update_timer.timeout.connect(self.update_events)
+        
+        self.logger = di[LoggerProtocol]
     
-    def is_running(self) -> bool:
-        return self.running
+    # - Properties
+    
+    def is_running(self) -> bool: return self.running
+    def get_widget(self) -> RecordScriptWidgetProtocol: return self.widget
+    def set_widget(self, widget): self.widget = widget
+    def get_router(self) -> RecordScriptPresenterRouter: return self.router
+    def set_router(self, router): self.router = router
+    
+    # - Setup
     
     def start(self):
-        self.trigger_key = SettingsManager.singleton.field_value(SettingsManagerField.RECORD_HOTKEY)
+        self.trigger_key = self.settings.field_value(SettingsManagerField.RECORD_HOTKEY)
         
-        self.keyboard_monitor = KeyboardEventMonitor()
+        self.keyboard_monitor = di[KeyboardEventMonitor]
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
         
@@ -74,6 +79,8 @@ class RecordScriptPresenter(Presenter):
         if self.trigger_key in self.event_monitor.filter_keys:
             self.event_monitor.filter_keys.remove(self.trigger_key)
     
+    # - Actions
+    
     def enable_tabs(self, value):
         self.router.enable_tabs(value)
     
@@ -81,7 +88,7 @@ class RecordScriptPresenter(Presenter):
         assert not self.running
         assert self.widget is not None
         
-        print('RecordScriptPresenter begin')
+        self.logger.info('RecordScriptPresenter begin')
         
         self.running = True
         self.storage.clear()
@@ -98,7 +105,7 @@ class RecordScriptPresenter(Presenter):
         assert self.running
         assert self.widget is not None
         
-        print('RecordScriptPresenter stop recording')
+        self.logger.info('RecordScriptPresenter stop recording')
         
         self.running = False
         self.event_monitor.stop()
@@ -114,8 +121,8 @@ class RecordScriptPresenter(Presenter):
     def save_recording(self):
         assert self.router is not None
         
-        print(f'RecordScriptPresenter save {self.storage.info.name}')
-        scripts_dir = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_PATH)
+        self.logger.info(f'RecordScriptPresenter save {self.storage.info.name}')
+        scripts_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
         file = self.router.pick_save_file(scripts_dir)
         
         if file is None:

@@ -1,19 +1,12 @@
 import pathlib
+from dataclasses import dataclass
 from os import listdir
 from os.path import isfile, join
-from Utilities import Path as PathUtils
 
+
+@dataclass
 class Path:
     absolute: str
-    
-    def __init__(self, path):
-        self.absolute = path
-    
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.absolute == other.absolute
-        else:
-            return False
     
     def is_empty(self) -> bool:
         return len(self.absolute) == 0
@@ -57,8 +50,10 @@ class Path:
         assert system_file_separator() not in value
         self.absolute += value
 
+
 def system_file_separator() -> str:
     return "/"
+
 
 def combine_paths(first, second):
     if isinstance(first, Path): first = first.absolute
@@ -68,8 +63,10 @@ def combine_paths(first, second):
     
     return Path(first + system_file_separator() + second)
 
+
 def filter_file_format(name, file_format) -> bool:
     return len(name) > len(file_format) + 1 and name.endswith(f'.{file_format}')
+
 
 def directory_file_list(directory, file_format = None) -> []:
     if isinstance(directory, Path): directory = directory.absolute
@@ -83,6 +80,6 @@ def directory_file_list(directory, file_format = None) -> []:
     result = []
     
     for file in file_names:
-        result.append(PathUtils.combine_paths(directory, file))
+        result.append(combine_paths(directory, file))
     
     return result

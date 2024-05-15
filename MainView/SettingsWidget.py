@@ -1,32 +1,28 @@
-import enum
-
 from PyQt5.QtWidgets import *
 from typing import Protocol
-
 from Service.SettingsManager import SettingsManagerField
 
 
 class SettingsWidgetProtocol(Protocol):
     def setup_field(self, parameter: SettingsManagerField, value): pass
 
+
 class SettingsWidgetDelegate(Protocol):
     def save_settings(self): pass
     def assign_hotkey(self, sender): pass
 
+
 class SettingsWidget(QWidget):
-    delegate: SettingsWidgetDelegate = None
     
-    play_hotkey_button: QPushButton
-    pause_hotkey_button: QPushButton
-    record_hotkey_button: QPushButton
+    # - Init
     
     def __init__(self, parent=None):
         super(SettingsWidget, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        
+        self.delegate = None
+        
         layout = QVBoxLayout()
-
+        
         hotkey_label = QLabel('Script Hotkeys')
         layout.addWidget(hotkey_label)
         
@@ -56,6 +52,11 @@ class SettingsWidget(QWidget):
         
         self.setLayout(layout)
     
+    # - Properties
+    
+    def get_delegate(self) -> SettingsWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    
     def setup_field(self, parameter: SettingsManagerField, value):
         match parameter:
             case SettingsManagerField.PLAY_HOTKEY:
@@ -64,6 +65,8 @@ class SettingsWidget(QWidget):
                 self.pause_hotkey_button.setText(value)
             case SettingsManagerField.RECORD_HOTKEY:
                 self.record_hotkey_button.setText(value)
+    
+    # - Actions
     
     def on_play_stop_hotkey(self):
         self.delegate.assign_hotkey(SettingsManagerField.PLAY_HOTKEY)

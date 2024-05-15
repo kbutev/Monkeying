@@ -1,41 +1,51 @@
 from typing import Protocol
+from kink import di
 from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
 from Service.ScriptStorage import ScriptStorage
-from Service.SettingsManager import SettingsManagerField
-from Service import SettingsManager
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Utilities import Path as PathUtils
-from Utilities.Path import Path
+from Utilities.Logger import LoggerProtocol
 
 
 class ShowScriptsWidgetRouter(Protocol):
     def open_script(self, parent, script_name, script_path): pass
 
+
 class ShowScriptsPresenter(Presenter):
-    widget: ShowScriptsWidgetProtocol = None
-    router: ShowScriptsWidgetRouter = None
     
-    working_dir: Path
-    file_format: str
-    
-    script_files = []
-    script_names = []
+    # - Init
     
     def __init__(self):
         super(ShowScriptsPresenter, self).__init__()
-        
-        settings = SettingsManager.singleton
+        settings = di[SettingsManagerProtocol]
+        self.widget = None
+        self.router = None
         self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
         self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        self.script_files = []
+        self.script_names = []
+        self.logger = di[LoggerProtocol]
+    
+    # - Property
+    
+    def get_widget(self) -> ShowScriptsWidgetProtocol: return self.widget
+    def set_widget(self, widget): self.widget = widget
+    def get_router(self) -> ShowScriptsWidgetRouter: return self.router
+    def set_router(self, router): self.router = router
+    
+    # - Setup
+    
+    def setup(self):
+        self.reload_data()
+    
+    # - Actions
     
     def start(self):
         assert self.widget is not None
         
-        print('start presenter')
+        self.logger.info('start presenter')
         self.setup()
-    
-    def setup(self):
-        self.reload_data()
     
     def reload_data(self):
         file_list = PathUtils.directory_file_list(self.working_dir, self.file_format)
@@ -52,8 +62,9 @@ class ShowScriptsPresenter(Presenter):
         self.script_names = script_names
         self.widget.set_data(script_names)
     
-    def can_open_script(self, item) -> bool:
-        return True
+    # Script actions
+    
+    def can_open_script(self, item) -> bool: return True
     
     def open_script(self, index):
         assert index >= 0 and index < len(self.script_files)

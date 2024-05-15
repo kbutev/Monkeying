@@ -5,20 +5,18 @@ from MainView.RecordScriptWidget import RecordScriptWidget
 from MainView.SettingsWidget import SettingsWidget
 from MainView.ShowScriptsWidget import ShowScriptsWidget
 
+
 class MainWidgetDelegate(Protocol):
     def on_current_tab_changed(self, index): pass
 
+
 class MainWidget(QTabWidget):
-    delegate: MainWidgetDelegate
-    scripts_widget: ShowScriptsWidget
-    rec_widget: RecordScriptWidget
-    settings_widget: SettingsWidget
+    
+    # - Init
     
     def __init__(self, parent=None):
         super(MainWidget, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        self.delegate = None
         self.scripts_widget = ShowScriptsWidget()
         self.rec_widget = RecordScriptWidget()
         self.settings_widget = SettingsWidget()
@@ -33,6 +31,13 @@ class MainWidget(QTabWidget):
         self.setMinimumSize(1024, 640)
         
         self.currentChanged.connect(self.on_current_tab_changed)
+    
+    # - Properties
+    
+    def get_delegate(self) -> MainWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    
+    # - Actions
     
     def on_current_tab_changed(self, index):
         if self.delegate is not None:

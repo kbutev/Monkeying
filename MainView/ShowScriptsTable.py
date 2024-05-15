@@ -1,10 +1,16 @@
 from PyQt5.QtWidgets import *
-from Service.SettingsManager import *
-from Service import SettingsManager
+from kink import inject, di
 
 
+@inject(use_factory=True)
 class ShowScriptsTableDataSource:
-    data = []
+    
+    # - Init
+    
+    def __init__(self, data=None):
+        self.data = data if data is not None else []
+    
+    # - Properties
     
     def count(self) -> int:
         return len(self.data)
@@ -14,13 +20,12 @@ class ShowScriptsTableDataSource:
 
 
 class ShowScriptsTable(QTableWidget):
-    data_source: ShowScriptsTableDataSource
+    
+    # - Init
     
     def __init__(self, parent=None):
         super(ShowScriptsTable, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        self.data_source = di[ShowScriptsTableDataSource]
         self.setColumnCount(1)
         self.setRowCount(0)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -29,6 +34,13 @@ class ShowScriptsTable(QTableWidget):
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
+    
+    # - Properties
+    
+    def get_data_source(self) -> ShowScriptsTableDataSource: return self.data_source
+    def set_data_source(self, data_source): self.data_source = data_source
+    
+    # - Actions
     
     def update_data(self):
         if self.data_source is not None:

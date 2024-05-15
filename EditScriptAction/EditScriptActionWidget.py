@@ -1,8 +1,8 @@
 from PyQt5 import sip
-from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import *
 from typing import Protocol
 from EditScriptAction.EditScriptActionField import EditScriptActionField
+
 
 class EditScriptActionWidgetProtocol(Protocol):
     def reset(self): pass
@@ -11,30 +11,32 @@ class EditScriptActionWidgetProtocol(Protocol):
     def save_changes(self): pass
     def cancel_changes(self): pass
 
+
 class EditWidgetDelegate(Protocol):
     def build_dynamic_fields(self) -> [QWidget]: pass
     def prompt_choose_key_dialog(self): pass
     def save(self): pass
     def close(self): pass
 
+
 class EditScriptActionWidget(QWidget):
-    delegate: EditWidgetDelegate = None
     
-    layout: QVBoxLayout
-    layout_dynamic_fields_start_index = 0
-    
-    dynamic_fields_initiated = False
-    
-    save_button: QPushButton
-    cancel_button: QPushButton
-    
-    timestamp_validator = QDoubleValidator()
+    # - Init
     
     def __init__(self, parent=None):
         super(EditScriptActionWidget, self).__init__(parent)
-        self.setup()
+        self.delegate = None
+        self.dynamic_fields_initiated = False
+        self._setup()
     
-    def setup(self):
+    # - Properties
+    
+    def get_delegate(self) -> EditWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    
+    # - Setup
+    
+    def _setup(self):
         layout = QVBoxLayout(self)
         self.layout = layout
         
@@ -55,7 +57,9 @@ class EditScriptActionWidget(QWidget):
         self.dynamic_fields_initiated = False
         self.disable_connections()
         self.delete_current_layout()
-        self.setup()
+        self._setup()
+    
+    # - Actions
     
     def enable_connections(self):
         self.enumerate_dynamic_fields(lambda field: field.enable_connection())

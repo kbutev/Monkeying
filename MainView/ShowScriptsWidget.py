@@ -1,30 +1,32 @@
 from typing import Protocol
 from PyQt5.QtWidgets import *
+from kink import di
+
 from MainView.ShowScriptsTable import ShowScriptsTableDataSource, ShowScriptsTable
+from Utilities.Logger import LoggerProtocol
 
 
 class ShowScriptsWidgetProtocol(Protocol):
     def set_data(self, data): pass
 
+
 class ShowScriptsWidgetDelegate(Protocol):
     def can_open_script(self, index) -> bool: pass
     def open_script(self, index): pass
 
+
 class ShowScriptsWidget(QWidget):
-    delegate: ShowScriptsWidgetDelegate = None
     
-    table: ShowScriptsTable
-    data_source = ShowScriptsTableDataSource()
+    # - Init
     
     def __init__(self, parent=None):
         super(ShowScriptsWidget, self).__init__(parent)
-        self.setup()
-    
-    def setup(self):
+        
+        self.delegate = None
+        
         layout = QVBoxLayout()
         
         self.table = ShowScriptsTable()
-        self.table.data_source = self.data_source
         layout.addWidget(self.table)
         
         open_button = QPushButton('Open')
@@ -32,10 +34,21 @@ class ShowScriptsWidget(QWidget):
         open_button.clicked.connect(self.open_selected_script)
         
         self.setLayout(layout)
+        
+        self.logger = di[LoggerProtocol]
+    
+    # - Properties
+    
+    def get_delegate(self) -> ShowScriptsWidgetDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
+    def get_data_source(self) -> ShowScriptsTableDataSource: return self.table.data_source
+    def set_data_source(self, data_source): self.table.data_source = data_source
     
     def set_data(self, data):
-        self.data_source.data = data
+        self.get_data_source().data = data
         self.update_data()
+    
+    # - Actions
     
     def selected_index(self) -> int:
         assert self.table.selectionModel().hasSelection()
@@ -43,7 +56,7 @@ class ShowScriptsWidget(QWidget):
         return index
     
     def selected_item(self) -> str:
-        return self.data_source.data[self.selected_index()]
+        return self.get_data_source().data[self.selected_index()]
     
     def open_selected_script(self):
         if self.delegate is not None:
@@ -56,7 +69,7 @@ class ShowScriptsWidget(QWidget):
     def open_script(self, name, index):
         assert self.delegate is not None
         
-        print(f'open script \'{name}\' at {index}')
+        self.logger.info(f'open script \'{name}\' at {index}')
         
         self.delegate.open_script(index)
     

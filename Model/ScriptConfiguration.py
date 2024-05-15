@@ -1,14 +1,22 @@
+from dataclasses import dataclass
 
 JSON_REPEAT_COUNT = 'repeat-count'
 JSON_REPEAT_FOREVER = 'repeat-forever'
 JSON_NOTIFY_START = 'notify-start'
 JSON_NOTIFY_END = 'notify-end'
 
+
 class ScriptConfiguration:
-    repeat_count = 0
-    repeat_forever = False
-    notify_on_start = False
-    notify_on_end = False
+    
+    # - Init
+    
+    def __init__(self):
+        self.repeat_count = 0
+        self.repeat_forever = False
+        self.notify_on_start = False
+        self.notify_on_end = False
+    
+    # - Properties
     
     def json(self):
         return {

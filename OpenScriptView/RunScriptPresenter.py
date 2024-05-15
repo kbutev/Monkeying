@@ -1,16 +1,15 @@
 import time
+from kink import di
 from typing import Protocol
 from PyQt5.QtCore import QTimer
-from Parser.EventActionParser import EventActionToStringParserProtocol, EventActionToStringParser
+from Parser.EventActionParser import EventActionToStringParser, EventActionToStringParserProtocol
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.ScriptStorage import ScriptStorage
 from Service.EventSimulatorManager import EventSimulatorManager
 from OpenScriptView.RunScriptWidget import RunScriptWidgetProtocol
-from Service.SettingsManager import SettingsManagerField
-from Service import SettingsManager
-from Utilities import Path as PathUtils
-from Utilities.Path import Path
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
+from Utilities.Logger import LoggerProtocol
 
 
 class RunScriptPresenterRouter(Protocol):
@@ -18,48 +17,50 @@ class RunScriptPresenterRouter(Protocol):
     def configure_script(self, parent): pass
 
 class RunScriptPresenter(Presenter):
-    widget: RunScriptWidgetProtocol = None
-    router: RunScriptPresenterRouter = None
     
-    file_format: str
-    
-    storage = []
-    script: str
-    
-    running = False
-    
-    simulator: EventSimulatorManager = None
-    keyboard_monitor = KeyboardEventMonitor()
-    
-    event_parser: EventActionToStringParserProtocol = EventActionToStringParser()
-    
-    play_trigger_key = None
-    pause_trigger_key = None
-    
-    update_timer: QTimer
-    
-    # When used, the hotkey is suspended for a short period
-    hotkey_click_time = 0
-    hotkey_suspend_interval = 0.5
+    # Init
     
     def __init__(self, script):
         super(RunScriptPresenter, self).__init__()
         
-        self.file_format = SettingsManager.singleton.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
-        storage = ScriptStorage()
-        storage.read_from_file(script)
-        self.storage = storage
+        self.widget = None
+        self.router = None
+        self.running = False
+        self.simulator = None
+        self.keyboard_monitor = di[KeyboardEventMonitor]
+        self.event_parser = di[EventActionToStringParserProtocol]
+        self.settings = di[SettingsManagerProtocol]
+        self.play_trigger_key = None
+        self.pause_trigger_key = None
+        
+        # When used, the hotkey is suspended for a short period
+        self.hotkey_click_time = 0
+        self.hotkey_suspend_interval = 0.5
+        
+        self.file_format = self.settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        self.storage = ScriptStorage()
+        self.storage.read_from_file(script)
         self.script = script
         
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(False)
         self.update_timer.setInterval(100)
         self.update_timer.timeout.connect(self.update_events)
+        
+        self.logger = di[LoggerProtocol]
+    
+    # Property
+    
+    def get_widget(self) -> RunScriptWidgetProtocol: return self.widget
+    def set_widget(self, widget): self.widget = widget
+    def get_router(self) -> RunScriptPresenterRouter: return self.router
+    def set_router(self, router): self.router = router
+    
+    # Setup
     
     def start(self):
-        settings = SettingsManager.singleton
-        self.play_trigger_key = settings.field_value(SettingsManagerField.PLAY_HOTKEY)
-        self.pause_trigger_key = settings.field_value(SettingsManagerField.PAUSE_HOTKEY)
+        self.play_trigger_key = self.settings.field_value(SettingsManagerField.PLAY_HOTKEY)
+        self.pause_trigger_key = self.settings.field_value(SettingsManagerField.PAUSE_HOTKEY)
         
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
@@ -90,13 +91,13 @@ class RunScriptPresenter(Presenter):
         assert self.widget is not None
         assert not self.running
         
-        print('RunScriptPresenter run script')
+        self.logger.info('RunScriptPresenter run script')
         
         self.running = True
         self.simulator = EventSimulatorManager(self.storage)
-        self.simulator.delegate = self
+        self.simulator.set_delegate(self)
         self.simulator.start()
-
+        
         self.update_timer.start()
         
         if sender is not self.widget and self.widget is not None:
@@ -105,7 +106,7 @@ class RunScriptPresenter(Presenter):
     def stop_script(self, sender):
         assert self.running
         
-        print('RunScriptPresenter stop script')
+        self.logger.info('RunScriptPresenter stop script')
         self.update_events()
         
         self.running = False
@@ -150,18 +151,18 @@ class RunScriptPresenter(Presenter):
         time_since_last_usage = time.time() - self.hotkey_click_time
         
         if time_since_last_usage < self.hotkey_suspend_interval:
-            print('RunScriptPresenter hotkey pass')
+            self.logger.verbose_info('RunScriptPresenter hotkey pass')
             return
         
         if event.key == self.play_trigger_key:
-            print('RunScriptPresenter play hotkey triggered')
+            self.logger.verbose_info('RunScriptPresenter play hotkey triggered')
             
             if self.running:
                 self.stop_script(sender=self)
             else:
                 self.run_script(sender=self)
         elif event.key == self.pause_trigger_key and self.running:
-            print('RunScriptPresenter pause hotkey triggered')
+            self.logger.verbose_info('RunScriptPresenter pause hotkey triggered')
             
             if self.simulator.is_paused():
                 self.resume_script(sender=self)

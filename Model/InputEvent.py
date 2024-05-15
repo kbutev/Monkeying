@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 from Model.InputEventType import InputEventType
+
 
 @runtime_checkable
 class InputEvent(Protocol):
@@ -12,10 +14,12 @@ class InputEvent(Protocol):
     def __lt__(self, other):
         return self.time() < other.time()
 
+
+@dataclass
 class InputEventDescription:
-    timestamp = ""
-    type = ""
-    value = ""
+    timestamp: str
+    type: str
+    value: str
     
     def value_as_string(self) -> str:
         return self.value

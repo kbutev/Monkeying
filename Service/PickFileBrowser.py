@@ -1,12 +1,14 @@
 from typing import Protocol
 from PyQt5.QtWidgets import QFileDialog
-
+from kink import inject
 from Utilities.Path import Path
 
 
 class PickFileBrowserProtocol(Protocol):
     def pick_file(self, parent, title, filter, directory) -> Path: pass
 
+
+@inject
 class PickFileBrowser(PickFileBrowserProtocol):
     def __init__(self):
         super(PickFileBrowser, self).__init__()

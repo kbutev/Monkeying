@@ -5,14 +5,16 @@ FLOAT_ROUND_DECIMALS = 3
 
 
 class MessageInputEvent(InputEvent):
-    timestamp: float
-    message_string: str
-    notification: bool
+    
+    # - Init
     
     def __init__(self, message_string: str, notification):
         super(MessageInputEvent, self).__init__()
+        self.timestamp = 0
         self.message_string = message_string
         self.notification = notification
+    
+    # - Properties
     
     def time(self):
         return self.timestamp
