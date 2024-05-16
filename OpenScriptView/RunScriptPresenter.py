@@ -2,8 +2,11 @@ import time
 from kink import di
 from typing import Protocol
 from PyQt5.QtCore import QTimer
-from Parser.EventActionParser import EventActionToStringParser, EventActionToStringParserProtocol
+
+from Model.ScriptData import ScriptData
+from Parser.ScriptActionDescriptionParser import ScriptActionDescriptionParserProtocol
 from Presenter.Presenter import Presenter
+from Provider.ScriptDataProvider import ScriptDataProviderProtocol, ScriptDataProvider
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.ScriptStorage import ScriptStorage
 from Service.EventSimulatorManager import EventSimulatorManager
@@ -20,7 +23,7 @@ class RunScriptPresenter(Presenter):
     
     # Init
     
-    def __init__(self, script):
+    def __init__(self, script_data: ScriptData):
         super(RunScriptPresenter, self).__init__()
         
         self.widget = None
@@ -28,7 +31,7 @@ class RunScriptPresenter(Presenter):
         self.running = False
         self.simulator = None
         self.keyboard_monitor = di[KeyboardEventMonitor]
-        self.event_parser = di[EventActionToStringParserProtocol]
+        self.event_parser = di[ScriptActionDescriptionParserProtocol]
         self.settings = di[SettingsManagerProtocol]
         self.play_trigger_key = None
         self.pause_trigger_key = None
@@ -38,9 +41,8 @@ class RunScriptPresenter(Presenter):
         self.hotkey_suspend_interval = 0.5
         
         self.file_format = self.settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
-        self.storage = ScriptStorage()
-        self.storage.read_from_file(script)
-        self.script = script
+        self.script_data = script_data.copy()
+        self.script_provider = ScriptDataProvider(script_data.get_file_path())
         
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(False)
@@ -55,20 +57,24 @@ class RunScriptPresenter(Presenter):
     def set_widget(self, widget): self.widget = widget
     def get_router(self) -> RunScriptPresenterRouter: return self.router
     def set_router(self, router): self.router = router
+    def get_script_actions(self) -> []: return self.script_data.events.data
+    def get_script_actions_as_strings(self) -> []: return list(map(lambda event: self.event_parser.parse(event), self.get_script_actions()))
     
     # Setup
     
     def start(self):
+        assert self.widget is not None
+        assert self.router is not None
+        
         self.play_trigger_key = self.settings.field_value(SettingsManagerField.PLAY_HOTKEY)
         self.pause_trigger_key = self.settings.field_value(SettingsManagerField.PAUSE_HOTKEY)
         
         self.keyboard_monitor.setup(self.noop_on_key_press, self.on_key_press)
         self.keyboard_monitor.start()
         
-        self.storage.read_from_file(self.storage.file_path)
-        events = list(map(lambda event: self.event_parser.parse(event), self.storage.data))
-        self.widget.set_events_data(events)
         self.widget.update_progress(0, 0)
+        
+        self.reload_data()
     
     def stop(self):
         if self.keyboard_monitor.is_running():
@@ -80,6 +86,19 @@ class RunScriptPresenter(Presenter):
         self.running = False
         
         self.update_timer.stop()
+    
+    def reload_data(self, completion=None):
+        assert self.widget is not None
+        assert self.router is not None
+        
+        self.script_provider.fetch(lambda script: self.update_data(script, completion),
+                                   lambda error: self.handle_error(error, completion))
+    
+    def update_data(self, script: ScriptData, completion=None):
+        self.script_data = script
+        self.widget.set_events_data(self.get_script_actions_as_strings())
+        
+        if completion is not None: completion()
     
     def is_script_active(self) -> bool:
         return self.running
@@ -94,7 +113,7 @@ class RunScriptPresenter(Presenter):
         self.logger.info('RunScriptPresenter run script')
         
         self.running = True
-        self.simulator = EventSimulatorManager(self.storage)
+        self.simulator = EventSimulatorManager(self.script_data)
         self.simulator.set_delegate(self)
         self.simulator.start()
         
@@ -141,8 +160,8 @@ class RunScriptPresenter(Presenter):
     def configure_script(self):
         self.router.configure_script(self.widget)
     
-    def update_script_configuration(self, info):
-        self.storage.info = info
+    def update_script_configuration(self, result: ScriptData):
+        self.script_data = result.copy()
     
     def enable_tabs(self, value):
         self.router.enable_tabs(value)

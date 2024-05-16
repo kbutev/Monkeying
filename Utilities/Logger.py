@@ -2,6 +2,7 @@ import threading
 from typing import Protocol
 from kink import inject
 from datetime import datetime
+from Utilities.SimpleWorker import current_thread_is_main
 
 
 def current_date():
@@ -9,7 +10,7 @@ def current_date():
 
 
 def get_current_thread_name():
-    return threading.get_ident() if not threading.main_thread() else 'main'
+    return 'main' if current_thread_is_main() else threading.get_ident()
 
 
 def get_current_thread_description():

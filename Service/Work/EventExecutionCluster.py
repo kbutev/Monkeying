@@ -2,6 +2,7 @@ import time
 from kink import di
 from Model import InputEvent
 from Model.MessageInputEvent import MessageInputEvent
+from Model.ScriptEvents import ScriptEvents
 from Service.EventSimulator import MouseEventSimulator, KeyboardEventSimulator
 from Service.OSNotificationCenter import OSNotificationCenterProtocol
 from Service.Work.EventExecution import EventExecution
@@ -87,17 +88,17 @@ class ScriptExecution(EventExecution):
     
     # - Init
     
-    def __init__(self, script_path: Path, events: [], builder): # builder: EventExecutionBuilderProtocol
-        assert len(events) > 0
+    def __init__(self, script_path: Path, events: ScriptEvents, builder): # builder: EventExecutionBuilderProtocol
+        assert events.count() > 0
         self.parent = None
         self.current_execution = None
         self.script_path = script_path
         self.events = events.copy()
         self.start_time = 0
         self.timer = Timer()
-        self.duration_time = events[len(events) - 1].time() if len(events) > 0 else 0
+        self.duration_time = events.duration()
         self.builder = builder
-        self.original_event_count = len(events)
+        self.original_event_count = events.count()
         self.logger = di[LoggerProtocol]
     
     # - Properties
@@ -115,7 +116,7 @@ class ScriptExecution(EventExecution):
         self.current_execution = current_execution
     
     def is_running(self) -> bool:
-        return len(self.events) > 0
+        return self.events.count() > 0
     
     def elapsed_time(self) -> float:
         return self.timer.elapsed_time()
@@ -127,7 +128,7 @@ class ScriptExecution(EventExecution):
         return self.duration_time
     
     def current_event_index(self) -> int:
-        return self.original_event_count - len(self.events)
+        return self.original_event_count - self.events.count()
     
     # - Actions
     
@@ -162,7 +163,7 @@ class ScriptExecution(EventExecution):
             self.current_execution.resume()
     
     def update(self):
-        if len(self.events) == 0:
+        if self.events.count() == 0:
             return False
         
         # Update current event
@@ -181,10 +182,10 @@ class ScriptExecution(EventExecution):
     # - Helpers
     
     def execute_next_event(self) -> bool:
-        if len(self.events) == 0:
+        if self.events.count() == 0:
             return False
         
-        next_event = self.events[0]
+        next_event = self.events.data[0]
         
         # If it's time, execute event
         if next_event.time() <= self.elapsed_time():
@@ -202,11 +203,11 @@ class ScriptExecution(EventExecution):
             return False
     
     def go_to_next_event(self):
-        assert len(self.events) > 0
-        self.events.pop(0)
+        assert self.events.count() > 0
+        self.events.data.pop(0)
         self.current_execution = None
         
-        if len(self.events) == 0:
+        if self.events.count() == 0:
             self.timer.stop()
         elif self.timer.is_paused():
             self.timer.resume()

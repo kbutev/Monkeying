@@ -3,8 +3,11 @@ from kink import di
 from typing import Protocol
 from PyQt5.QtCore import QTimer
 from Model.InputEventType import InputEventType
-from Parser.EventActionParser import EventActionToStringParser, EventActionToStringParserGrouping, \
-    EventActionToStringParserProtocol
+from Model.ScriptConfiguration import ScriptConfiguration
+from Model.ScriptData import ScriptData
+from Model.ScriptEvents import ScriptEvents
+from Model.ScriptInfo import ScriptInfo
+from Parser.ScriptActionDescriptionParser import ScriptActionDescriptionParserProtocol, Grouping
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventMonitorManager import EventMonitorManager
@@ -29,15 +32,18 @@ class RecordScriptPresenter(Presenter):
         
         self.router = None
         self.widget = None
+        
         self.settings = di[SettingsManagerProtocol]
-        self.storage = ScriptStorage()
-        self.event_monitor = EventMonitorManager(self.storage)
         self.keyboard_monitor = di[KeyboardEventMonitor]
+        self.event_parser = di[ScriptActionDescriptionParserProtocol]
+        
+        self.event_monitor = EventMonitorManager()
+        self.script_info = ScriptInfo()
+        self.script_config = ScriptConfiguration()
+        
         self.running = False
         self.file_format = '.json'
         self.trigger_key = None
-        self.events_data = []
-        self.event_parser = di[EventActionToStringParserProtocol]
         
         # When used, the hotkey is suspended for a short period
         self.hotkey_click_time = 0
@@ -57,6 +63,9 @@ class RecordScriptPresenter(Presenter):
     def set_widget(self, widget): self.widget = widget
     def get_router(self) -> RecordScriptPresenterRouter: return self.router
     def set_router(self, router): self.router = router
+    def get_recorded_events(self) -> ScriptEvents: return self.event_monitor.get_events()
+    def get_script_info(self) -> ScriptInfo: return self.script_info
+    def get_script_config(self) -> ScriptConfiguration: return self.script_config
     
     # - Setup
     
@@ -91,7 +100,6 @@ class RecordScriptPresenter(Presenter):
         self.logger.info('RecordScriptPresenter begin')
         
         self.running = True
-        self.storage.clear()
         self.event_monitor.start()
         self.update_events()
         self.update_timer.start()
@@ -116,28 +124,32 @@ class RecordScriptPresenter(Presenter):
             self.widget.stop_recording(sender=self)
     
     def configure_script(self):
-        self.router.configure_script(self.widget, self.storage)
+        script = self.script_info
+        self.router.configure_script(self.widget, self.get_script_config())
     
     def save_recording(self):
         assert self.router is not None
         
-        self.logger.info(f'RecordScriptPresenter save {self.storage.info.name}')
-        scripts_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
-        file = self.router.pick_save_file(scripts_dir)
+        info = self.get_script_info()
         
-        if file is None:
+        self.logger.info(f'RecordScriptPresenter save {info.name}')
+        scripts_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+        file_path = self.router.pick_save_file(scripts_dir)
+        
+        if file_path is None:
             return
         
-        if not file.absolute.endswith(self.file_format):
-            file.append_to_end(self.file_format)
+        if not file_path.absolute.endswith(self.file_format):
+            file_path.append_to_end(self.file_format)
         
         # When name is not set, set it to equal file name
-        if self.storage.info.is_name_default():
-            self.storage.info.name = file.stem()
+        if info.is_name_default():
+            info.name = file_path.stem()
         
-        self.storage.write_to_file(path=file)
+        script = ScriptData(self.get_recorded_events(), self.get_script_info(), self.get_script_config())
+        ScriptStorage(file_path).write_to_file(script)
+        
         self.widget.disable_save_recording()
-        
         self.widget.on_script_save()
     
     def on_key_press(self, event):
@@ -158,7 +170,7 @@ class RecordScriptPresenter(Presenter):
         pass
     
     def update_events(self):
-        storage_data = self.storage.data.copy()
-        events = self.event_parser.parse_list(reversed(storage_data), group_options=EventActionToStringParserGrouping(InputEventType.MOUSE_MOVE))
+        events = self.get_recorded_events().data
+        events = self.event_parser.parse_list(reversed(events), group_options=Grouping(InputEventType.MOUSE_MOVE))
         self.widget.set_events_data(events)
 

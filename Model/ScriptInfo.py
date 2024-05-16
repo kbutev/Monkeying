@@ -2,13 +2,6 @@ from Utilities import Logger
 
 
 CURRENT_VERSION = '1.0'
-JSON_VERSION = 'version'
-JSON_NAME = 'name'
-JSON_DESCRIPTION = 'description'
-JSON_CDATE = 'date-created'
-JSON_MDATE = 'date-modified'
-JSON_EVENT_COUNT = 'event-count'
-
 DEFAULT_SCRIPT_NAME = 'script'
 DEFAULT_SCRIPT_DESCRIPTION = ''
 
@@ -23,6 +16,15 @@ class ScriptInfo:
         self.description = DEFAULT_SCRIPT_DESCRIPTION
         self.date_created = Logger.current_date()
         self.date_modified = Logger.current_date()
+    
+    def copy(self):
+        result = ScriptInfo()
+        result.version = self.version
+        result.name = self.name
+        result.description = self.description
+        result.date_created = self.date_created
+        result.date_modified = self.date_modified
+        return result
     
     # - Properties
     
@@ -42,20 +44,3 @@ class ScriptInfo:
     
     def update_modified_date(self):
         self.date_modified = Logger.current_date()
-    
-    def json(self, count):
-        return {
-            JSON_VERSION: self.version,
-            JSON_NAME: self.name,
-            JSON_DESCRIPTION: self.description,
-            JSON_CDATE: self.date_created,
-            JSON_MDATE: self.date_modified,
-            JSON_EVENT_COUNT: count
-        }
-    
-    def read_from_json(self, json):
-        self.version = json[JSON_VERSION]
-        self.name = json[JSON_NAME]
-        self.description = json[JSON_DESCRIPTION]
-        self.date_created = json[JSON_CDATE]
-        self.date_modified = json[JSON_MDATE]

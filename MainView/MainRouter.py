@@ -7,9 +7,11 @@ from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
 from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
 from MainView.MainWidget import MainWidget
 from MainView.SettingsPresenter import SettingsPresenter
+from Model.ScriptData import ScriptData
 from OpenScriptView.OpenScriptRouter import OpenScriptRouter
 from MainView.ShowScriptsPresenter import ShowScriptsPresenter
 from MainView.RecordScriptPresenter import RecordScriptPresenter
+from Provider.ScriptDataProvider import ScriptDataProvider
 from Service.PickFileBrowser import PickFileBrowser
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Utilities.Path import Path
@@ -57,17 +59,16 @@ class MainRouter(Protocol):
     def enable_tabs(self, enabled):
         self.widget.tabBar().setEnabled(enabled)
     
-    def open_script(self, parent, script_name, script_path):
+    def open_script(self, parent, script_data: ScriptData):
         assert parent is not None
-        assert script_name is not None
-        assert script_path is not None
+        assert script_data is not None
         
         window = QDialog(parent)
-        window.setWindowTitle(f'Run {script_name}')
+        window.setWindowTitle(f'Run {script_data.info.name}')
         window.setWindowFlags(window.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
         layout = QVBoxLayout()
         
-        router = OpenScriptRouter(window, script_path)
+        router = OpenScriptRouter(window, script_data)
         router.observer = self
         router.setup()
         
@@ -76,7 +77,7 @@ class MainRouter(Protocol):
         window.setLayout(layout)
         window.exec()
         
-    def on_script_closed(self, storage):
+    def on_script_closed(self):
         self.show_scripts_presenter.reload_data()
     
     def on_current_tab_changed(self, index):
@@ -98,8 +99,8 @@ class MainRouter(Protocol):
     def pick_save_file(self, directory) -> Path:
         return self.pick_file_browser.pick_file(self.widget, "Save File", self.file_format, directory)
     
-    def configure_script(self, parent, script_storage):
-        router = ConfigureScriptRouter(script_storage)
+    def configure_script(self, parent, script):
+        router = ConfigureScriptRouter(script, True)
         router.setup(parent)
         router.widget.exec()
     

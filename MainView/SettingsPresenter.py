@@ -6,6 +6,9 @@ from Presenter.Presenter import Presenter
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from kink import di
 
+from Utilities.Logger import LoggerProtocol
+from Utilities.SimpleWorker import run_in_background
+
 
 class SettingsPresenterRouter(Protocol):
     def enable_tabs(self, value): pass
@@ -21,6 +24,7 @@ class SettingsPresenter(Presenter):
         self.router = None
         self.widget = None
         self.settings = di[SettingsManagerProtocol]
+        self.logger = di[LoggerProtocol]
     
     # - Properties
     
@@ -32,13 +36,18 @@ class SettingsPresenter(Presenter):
     # - Actions
     
     def start(self):
-        self.settings.read_from_file()
-        self.load_default_values()
+        self.read_settings_from_file()
     
     def stop(self):
         pass
     
-    def load_default_values(self):
+    def read_settings_from_file(self):
+        self.logger.info('reading settings...')
+        run_in_background(self.settings.read_from_file, lambda result: self.update_data())
+    
+    def update_data(self):
+        self.logger.info('settings values loaded')
+        
         play_hotkey = SettingsManagerField.PLAY_HOTKEY
         self.widget.setup_field(play_hotkey, KeyboardKeyParser.key_to_string(self.settings.field_value(play_hotkey)))
         pause_hotkey = SettingsManagerField.PAUSE_HOTKEY
@@ -47,7 +56,7 @@ class SettingsPresenter(Presenter):
         self.widget.setup_field(record_hotkey, KeyboardKeyParser.key_to_string(self.settings.field_value(record_hotkey)))
     
     def save_settings(self):
-        self.settings.write_to_file()
+        run_in_background(self.settings.write_to_file)
     
     def assign_hotkey(self, parameter: SettingsManagerField):
         self.router.prompt_choose_key_dialog(parameter)

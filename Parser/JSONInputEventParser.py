@@ -8,7 +8,7 @@ class JSONInputEventParserProtocol(Protocol):
 
 
 @inject(use_factory=True, alias=JSONInputEventParserProtocol)
-class JSONInputEventParser:
+class JSONInputEventParser(JSONInputEventParserProtocol):
     INDENT = 2
     
     def build_entry(self, time, event_type) -> JSONInputEvent:

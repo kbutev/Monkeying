@@ -8,26 +8,17 @@ JSON_NOTIFY_END = 'notify-end'
 
 class ScriptConfiguration:
     
-    # - Init
-    
     def __init__(self):
         self.repeat_count = 0
         self.repeat_forever = False
         self.notify_on_start = False
         self.notify_on_end = False
     
-    # - Properties
-    
-    def json(self):
-        return {
-            JSON_REPEAT_COUNT: self.repeat_count,
-            JSON_REPEAT_FOREVER: self.repeat_forever,
-            JSON_NOTIFY_START: self.notify_on_start,
-            JSON_NOTIFY_END: self.notify_on_end
-        }
-    
-    def read_from_json(self, json):
-        self.repeat_count = json[JSON_REPEAT_COUNT]
-        self.repeat_forever = json[JSON_REPEAT_FOREVER]
-        self.notify_on_start = json[JSON_NOTIFY_START]
-        self.notify_on_end = json[JSON_NOTIFY_END]
+    def copy(self):
+        result = ScriptConfiguration()
+        result.repeat_count = self.repeat_count
+        result.repeat_forever = self.repeat_forever
+        result.notify_on_start = self.notify_on_start
+        result.notify_on_end = self.notify_on_end
+        return result
+

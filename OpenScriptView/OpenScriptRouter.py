@@ -2,32 +2,33 @@ from typing import Protocol
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
 from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
 from EditScriptAction.EditScriptActionRouter import EditScriptActionRouter
-from Model.ScriptInfo import ScriptInfo
+from Model.ScriptData import ScriptData
 from OpenScriptView.EditScriptPresenter import EditScriptPresenter
 from OpenScriptView.OpenScriptWidget import OpenScriptWidget
 from OpenScriptView.RunScriptPresenter import RunScriptPresenter
 
 
 class OpenScriptRouterObserver(Protocol):
-    def on_script_closed(self, storage): pass
+    def on_script_closed(self): pass
 
 
 class OpenScriptRouter(Protocol):
     
     # - Init
     
-    def __init__(self, parent, script):
+    def __init__(self, parent, script_data: ScriptData):
         self.observer = None
         self.parent = parent
         self.widget = OpenScriptWidget()
-        self.edit_script_presenter = EditScriptPresenter(script)
-        self.run_script_presenter = RunScriptPresenter(script)
+        self.edit_script_presenter = EditScriptPresenter(script_data)
+        self.run_script_presenter = RunScriptPresenter(script_data)
         self.current_dialog = None
     
     # - Properties
     
     def get_observer(self) -> OpenScriptRouterObserver: return self.observer
     def set_observer(self, observer): self.observer = observer
+    def get_script_data(self) -> ScriptData: return self.edit_script_presenter.get_script_data()
     
     # - Setup
     
@@ -79,7 +80,7 @@ class OpenScriptRouter(Protocol):
         router.widget.exec()
     
     def configure_script(self, parent):
-        router = ConfigureScriptRouter(self.edit_script_presenter.storage)
+        router = ConfigureScriptRouter(self.get_script_data(), True)
         router.observer = self
         router.setup(parent)
         router.widget.exec()
@@ -88,14 +89,14 @@ class OpenScriptRouter(Protocol):
         # When window closes: stop services
         self.run_script_presenter.stop()
         self.edit_script_presenter.stop()
-        self.observer.on_script_closed(self.edit_script_presenter.storage)
+        self.observer.on_script_closed()
     
-    def on_exit_config_script(self, result: ScriptInfo):
+    def on_exit_config_script(self, result: ScriptData):
         self.run_script_presenter.update_script_configuration(result)
         self.edit_script_presenter.update_script_configuration(result)
         
         # Update window title
-        script_name = result.name
+        script_name = result.info.name
         self.parent.setWindowTitle(f'Run {script_name}')
     
     def on_current_tab_changed(self, index):

@@ -1,27 +1,25 @@
-from typing import Protocol
+from typing import Protocol, Any
 from kink import di, inject
 from Model.InputEvent import InputEvent
 from Model.MessageInputEvent import MessageInputEvent
 from Model.ScriptInputEvent import ScriptInputEvent
-from Parser.EventActionParser import EventActionParserProtocol
 from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Service.Work.EventExecutionCluster import EventMessageExecution, ScriptExecution, EventKeyExecution
 
 
 class EventExecutionBuilderProtocol(Protocol):
-    def build(self, event: InputEvent): pass
+    def build(self, input_event: InputEvent) -> Any: return None
 
 
 @inject(use_factory=True, alias=EventExecutionBuilderProtocol)
-class EventExecutionBuilder:
+class EventExecutionBuilder(EventExecutionBuilderProtocol):
     
     def __init__(self):
         settings = di[SettingsManagerProtocol]
         self.working_dir = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
-        self.event_parser = di[EventActionParserProtocol]
     
-    def build(self, input_event: InputEvent):
+    def build(self, input_event: InputEvent) -> Any:
         event_type = input_event.event_type()
         
         if event_type.is_keyboard() or event_type.is_mouse():
@@ -29,11 +27,9 @@ class EventExecutionBuilder:
         elif isinstance(input_event, MessageInputEvent):
             result = EventMessageExecution(input_event)
         elif isinstance(input_event, ScriptInputEvent):
-            storage = ScriptStorage()
             script_file_path = input_event.path
-            storage.read_from_file(script_file_path)
-            events = list(map(lambda event: self.event_parser.parse_json(event), storage.data.copy()))
-            result = ScriptExecution(script_file_path, events, self)
+            script_data = ScriptStorage(script_file_path).read_from_file()
+            result = ScriptExecution(script_file_path, script_data.events, self)
         else:
             assert False
         

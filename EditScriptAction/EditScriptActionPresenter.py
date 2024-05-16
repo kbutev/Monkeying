@@ -9,7 +9,7 @@ from EditScriptAction.EditScriptActionWidget import EditScriptActionWidgetProtoc
 from Model.InputEvent import InputEvent
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.JSONInputEvent import JSONInputEvent
-from Parser.EventActionParser import EventActionParser, EventActionParserProtocol
+from Parser.ScriptActionParser import ScriptActionParserProtocol
 from Presenter.Presenter import Presenter
 from Utilities.Path import Path
 
@@ -31,7 +31,7 @@ class EditScriptActionPresenter(Presenter):
         self.input_event = input_event
         self.field_builder = di[EditScriptActionFieldBuilderProtocol]
         self.field_builder.context_script_path = context_script_path
-        self.action_parser = di[EventActionParserProtocol]
+        self.action_parser = di[ScriptActionParserProtocol]
     
     # - Properties
     
@@ -75,7 +75,7 @@ class EditScriptActionPresenter(Presenter):
         default_values.set_defaults(value)
         default_values.set_time(self.input_event.time())
         
-        self.input_event = self.action_parser.parse_json(default_values)
+        self.input_event = self.action_parser.parse_to_event(default_values)
         
         self.widget.fill_values()
     

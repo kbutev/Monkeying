@@ -78,7 +78,7 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
     
     # - Properties
     
-    def context_script_path_value(self) -> Path: return self.context_script_path
+    def get_context_script_path(self) -> Path: return self.context_script_path
     def set_context_script_path(self, value): self.context_script_path = value
     
     # - Build
@@ -151,7 +151,8 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
             base_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
             file_format = self.settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
             items = PathUtils.directory_file_list(base_dir, file_format)
-            context_script_file = self.context_script_path().last_component()
+            items = list(map(lambda item: item.last_component(), items))
+            context_script_file = self.context_script_path.last_component()
             
             # Do not include the context script to avoid recursion
             items.remove(context_script_file)

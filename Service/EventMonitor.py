@@ -17,7 +17,7 @@ from Utilities.Logger import LoggerProtocol
 class KeyboardEventMonitor(QObject):
     
     # Signal automatically binds to every unique instance
-    signal_main = pyqtSignal(KeystrokeEvent, name='emit_event_on_main')
+    signal_main = pyqtSignal(KeystrokeEvent, name='KeyboardEventMonitor.emit_event_on_main')
     
     # - Init
     
@@ -91,7 +91,7 @@ class KeyboardEventMonitor(QObject):
     
     def on_press(self, key):
         if not self.running: return False
-        self.logger.info(f"{key} pressed")
+        self.logger.verbose_info(f"{key} pressed")
         
         self.signal_main.emit(KeystrokeEvent(KeyPressType.PRESS, key))
         
@@ -99,7 +99,7 @@ class KeyboardEventMonitor(QObject):
     
     def on_release(self, key):
         if not self.running: return False
-        self.logger.info(f"{key} released")
+        self.logger.verbose_info(f"{key} released")
         
         self.signal_main.emit(KeystrokeEvent(KeyPressType.RELEASE, key))
         
@@ -117,9 +117,9 @@ class KeyboardEventMonitor(QObject):
 class MouseEventMonitor(QObject):
     
     # Signal automatically binds to every unique instance
-    signal_main_move = pyqtSignal(MouseMoveEvent, name='emit_event_on_main_move')
-    signal_main_click = pyqtSignal(MouseClickEvent, name='emit_event_on_main_click')
-    signal_main_scroll = pyqtSignal(MouseScrollEvent, name='emit_event_on_main_scroll')
+    signal_main_move = pyqtSignal(MouseMoveEvent, name='MouseEventMonitor.emit_event_on_main_move')
+    signal_main_click = pyqtSignal(MouseClickEvent, name='MouseEventMonitor.emit_event_on_main_click')
+    signal_main_scroll = pyqtSignal(MouseScrollEvent, name='MouseEventMonitor.emit_event_on_main_scroll')
     
     # - Init
     
@@ -195,7 +195,7 @@ class MouseEventMonitor(QObject):
     
     def on_move(self, x, y) -> bool:
         if not self.running: return False
-        self.logger.info(f"({x}, {y}) moved")
+        self.logger.verbose_info(f"({x}, {y}) moved")
         
         self.signal_main_move.emit(MouseMoveEvent(Point(x, y)))
         
@@ -206,7 +206,7 @@ class MouseEventMonitor(QObject):
         
         press = KeyPressType.PRESS if is_pressed else KeyPressType.RELEASE
         
-        self.logger.info(f"{key} {press.name}")
+        self.logger.verbose_info(f"{key} {press.name}")
         
         self.signal_main_click.emit(MouseClickEvent(press, key, Point(x, y)))
         
@@ -215,7 +215,7 @@ class MouseEventMonitor(QObject):
     def on_scroll(self, x, y, dx, dy) -> bool:
         if not self.running: return False
         
-        self.logger.info(f"scrolled by ({x}, {y}) by ({dx}, {dy})")
+        self.logger.verbose_info(f"scrolled by ({x}, {y}) by ({dx}, {dy})")
         
         self.signal_main_scroll.emit(MouseScrollEvent(Point(x, y), Point(dx, dy)))
         

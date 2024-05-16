@@ -1,9 +1,7 @@
 from typing import Protocol
-
 from kink import di
-
-from Parser.EventActionParser import EventActionParser, EventActionParserProtocol
-from Service.ScriptStorage import ScriptStorage
+from Model.ScriptData import ScriptData
+from Parser.ScriptActionParser import ScriptActionParserProtocol
 from Service.Work.ScriptSimulationWorker import ScriptSimulationWorker, ScriptSimulationWorkerState
 from Utilities.Logger import LoggerProtocol
 
@@ -16,12 +14,12 @@ class EventSimulatorManager:
     
     # - Init
     
-    def __init__(self, storage: ScriptStorage):
+    def __init__(self, script_data: ScriptData):
         self.delegate = None
         self.running = False
-        self.storage = storage
+        self.script_data = script_data
         self.worker = None
-        self.parser = di[EventActionParserProtocol]
+        self.parser = di[ScriptActionParserProtocol]
         self.logger = di[LoggerProtocol]
     
     # - Properties
@@ -45,7 +43,7 @@ class EventSimulatorManager:
         self.logger.info('EventSimulatorManager start')
         
         self.running = True
-        worker = ScriptSimulationWorker(self.storage, self.parser)
+        worker = ScriptSimulationWorker(self.script_data)
         worker.delegate = self
         worker.finished.connect(self.on_end)
         self.worker = worker

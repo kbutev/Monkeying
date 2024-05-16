@@ -2,6 +2,11 @@ import enum
 import threading
 from PyQt5.QtCore import QThread
 from kink import di
+
+from Model.ScriptConfiguration import ScriptConfiguration
+from Model.ScriptData import ScriptData
+from Model.ScriptInfo import ScriptInfo
+from Parser.ScriptActionParser import ScriptActionParserProtocol
 from Service.OSNotificationCenter import OSNotificationCenterProtocol
 from Service.ScriptStorage import ScriptStorage
 from Service.Work.EventExecutionBuilder import EventExecutionBuilderProtocol
@@ -25,7 +30,7 @@ class ScriptSimulationWorker(QThread):
     
     # - Init
     
-    def __init__(self, storage: ScriptStorage, event_parser):
+    def __init__(self, script_data: ScriptData):
         super(ScriptSimulationWorker, self).__init__()
         
         self.lock = threading.Lock()
@@ -33,23 +38,28 @@ class ScriptSimulationWorker(QThread):
         self._state = ScriptSimulationWorkerState.IDLE
         self._cancelled = False
         
-        self.script_name = storage.info.name
-        self.script_path = storage.file_path
-        self.events = list(map(lambda event: event_parser.parse_json(event), storage.data.copy()))
-        self.configuration = storage.configuration
+        self.script_data = script_data.copy()
+        self.script_path = script_data.file_path
+        self.action_parser = di[ScriptActionParserProtocol]
         
         self.execution_count = 0
         
-        if self.configuration.repeat_forever:
+        if self.script_config().repeat_forever:
             self.execution_limit = None
         else:
-            self.execution_limit = 1 + self.configuration.repeat_count
+            self.execution_limit = 1 + self.script_config().repeat_count
         
         self.current_execution = self.build_execution_script()
         
         self.logger = di[LoggerProtocol]
     
     # - Properties
+    
+    def script_info(self) -> ScriptInfo:
+        return self.script_data.info
+    
+    def script_config(self) -> ScriptConfiguration:
+        return self.script_data.config
     
     def state(self) -> ScriptSimulationWorkerState:
         with self.lock:
@@ -82,7 +92,7 @@ class ScriptSimulationWorker(QThread):
         return self.current_execution.duration()
     
     def build_execution_script(self) -> ScriptExecution:
-        return ScriptExecution(self.script_path, self.events.copy(), di[EventExecutionBuilderProtocol])
+        return ScriptExecution(self.script_path, self.script_data.events, di[EventExecutionBuilderProtocol])
     
     def notification_center(self) -> OSNotificationCenterProtocol:
         return di[OSNotificationCenterProtocol]
@@ -155,13 +165,13 @@ class ScriptSimulationWorker(QThread):
                 self.current_execution.start_time = start_time
     
     def show_start_notification(self):
-        if not self.configuration.notify_on_start:
+        if not self.script_config().notify_on_start:
             return
         
-        self.notification_center().show(NOTIFICATION_TITLE, f'{self.script_name} started')
+        self.notification_center().show(NOTIFICATION_TITLE, f'{self.script_info().name} started')
     
     def show_end_notification(self):
-        if not self.configuration.notify_on_end:
+        if not self.script_config().notify_on_end:
             return
         
-        self.notification_center().show(NOTIFICATION_TITLE, f'{self.script_name} ended')
+        self.notification_center().show(NOTIFICATION_TITLE, f'{self.script_info().name} ended')

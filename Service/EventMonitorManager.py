@@ -1,7 +1,9 @@
+import threading
 import time
 from PyQt5.QtCore import QThread
 from kink import di
 
+from Model.ScriptEvents import ScriptEvents
 from Service.ScriptStorage import ScriptStorage
 from Service.EventMonitor import MouseEventMonitor, KeyboardEventMonitor
 from Utilities.Logger import LoggerProtocol
@@ -11,10 +13,13 @@ class EventMonitorWorker(QThread):
     
     # - Init
     
-    def __init__(self, storage: ScriptStorage):
+    def __init__(self):
         super(EventMonitorWorker, self).__init__()
+        
+        self.lock = threading.Lock()
+        
+        self.events = ScriptEvents([])
         self.start_time = 0
-        self.storage = storage
         self.filter_keys = []
         
         self.keyboard_monitor = di[KeyboardEventMonitor]
@@ -24,6 +29,18 @@ class EventMonitorWorker(QThread):
         self.mouse_monitor.setup(self.on_mouse_move, self.on_mouse_press, self.on_mouse_release, self.on_mouse_scroll)
         
         self.logger = di[LoggerProtocol]
+    
+    # - Properties
+    
+    def get_events(self) -> ScriptEvents:
+        with self.lock:
+            result = ScriptEvents(self.events.data.copy())
+        
+        return result
+    
+    def set_events(self, events):
+        with self.lock:
+            self.events = events
     
     # - Actions
     
@@ -46,50 +63,57 @@ class EventMonitorWorker(QThread):
     
     def on_mouse_move(self, event):
         event.set_time(self.elapsed_time())
-        self.storage.record(event)
+        self.events.data.append(event)
     
     def on_mouse_press(self, event):
         event.set_time(self.elapsed_time())
-        self.storage.record(event)
+        self.events.data.append(event)
     
     def on_mouse_release(self, event):
         event.set_time(self.elapsed_time())
-        self.storage.record(event)
+        self.events.data.append(event)
     
     def on_mouse_scroll(self, event):
         event.set_time(self.elapsed_time())
-        self.storage.record(event)
+        self.events.data.append(event)
     
     def on_keyboard_press(self, event):
         if event.key in self.filter_keys:
             return
         
         event.set_time(self.elapsed_time())
-        self.storage.record(event)
+        self.events.data.append(event)
     
     def on_keyboard_release(self, event):
         if event.key in self.filter_keys:
             return
         
         event.set_time(self.elapsed_time())
-        self.storage.record(event)
+        self.events.data.append(event)
 
 
 class EventMonitorManager:
     
     # - Init
     
-    def __init__(self, storage: ScriptStorage):
-        self.storage = storage
+    def __init__(self):
         self.running = False
         self.worker = None
+        self.events = []
         self.filter_keys = []
         self.logger = di[LoggerProtocol]
     
     # - Properties
     
-    def is_running(self) -> bool:
-        return self.running
+    def is_running(self) -> bool: return self.running
+    
+    def get_events(self) -> ScriptEvents:
+        assert self.worker is not None
+        return self.worker.get_events()
+    
+    def set_events(self, events):
+        assert self.worker is not None
+        self.worker.set_events(events)
     
     # - Actions
     
@@ -99,7 +123,7 @@ class EventMonitorManager:
         self.logger.info('EventMonitorManager start')
         
         self.running = True
-        worker = EventMonitorWorker(self.storage)
+        worker = EventMonitorWorker()
         worker.filter_keys = self.filter_keys
         worker.finished.connect(self.on_stop)
         self.worker = worker
