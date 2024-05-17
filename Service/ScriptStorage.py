@@ -25,9 +25,9 @@ class ScriptStorage:
         path = self.file_path.absolute
         
         self.logger.info(f"write data to \'{path}\'")
-        
-        file = open(path, permissions, encoding=encoding)
+
         result = self.script_data_parser.parse_to_json(script)
+        file = open(path, permissions, encoding=encoding)
         file.write(result)
         file.close()
         
@@ -40,6 +40,11 @@ class ScriptStorage:
         
         file = open(path, permissions, encoding=encoding)
         file_contents = file.read()
+        
+        if len(file_contents) == 0:
+            # TODO: error handling
+            return None
+        
         result = self.script_data_parser.parse_to_script(file_contents)
         result.set_file_path(self.file_path)
         file.close()

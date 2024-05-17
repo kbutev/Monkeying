@@ -130,7 +130,9 @@ class RecordScriptPresenter(Presenter):
     def save_recording(self):
         assert self.router is not None
         
-        info = self.get_script_info()
+        events = self.get_recorded_events()
+        info = self.get_script_info().copy()
+        config = self.get_script_config()
         
         self.logger.info(f'RecordScriptPresenter save {info.name}')
         scripts_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
@@ -146,7 +148,7 @@ class RecordScriptPresenter(Presenter):
         if info.is_name_default():
             info.name = file_path.stem()
         
-        script = ScriptData(self.get_recorded_events(), self.get_script_info(), self.get_script_config())
+        script = ScriptData(events, info, config)
         ScriptStorage(file_path).write_to_file(script)
         
         self.widget.disable_save_recording()

@@ -3,7 +3,7 @@ from typing import Protocol
 from kink import inject, di
 from Model.InputEvent import InputEventDescription, InputEvent
 from Model.InputEventType import InputEventType
-from Parser.ScriptActionParser import ScriptActionParser
+from Parser.ScriptActionParser import ScriptActionParser, ScriptActionParserProtocol
 
 
 @dataclass
@@ -23,12 +23,12 @@ class ScriptActionDescriptionParserProtocol(Protocol):
 class ScriptActionDescriptionParser(ScriptActionDescriptionParserProtocol):
     
     def __init__(self):
-        pass
+        self.inner_parser = di[ScriptActionParserProtocol]
     
     def parse(self, event) -> InputEventDescription:
         if not isinstance(event, InputEvent):
             event = self.inner_parser.parse_to_json(event)
-            
+        
         assert isinstance(event, InputEvent)
         
         timestamp = "{:.3f}".format(event.time())

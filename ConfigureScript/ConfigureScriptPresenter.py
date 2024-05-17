@@ -51,22 +51,22 @@ class ConfigureScriptPresenter:
     # - Actions
     
     def on_name_changed(self, value):
-        self.script_data.info.name = value
+        self.script_data.get_info().name = value
     
     def on_description_changed(self, value):
-        self.script_data.info.description = value
+        self.script_data.get_info().description = value
     
     def on_repeat_count_changed(self, value):
-        self.script_data.configuration.repeat_count = int(value)
+        self.script_data.get_config().repeat_count = int(value)
     
     def on_repeat_forever_changed(self, value):
-        self.script_data.configuration.repeat_forever = bool(value)
+        self.script_data.get_config().repeat_forever = bool(value)
     
     def on_notify_on_start_changed(self, value):
-        self.script_data.configuration.notify_on_start = value
+        self.script_data.get_config().notify_on_start = value
     
     def on_notify_on_end_changed(self, value):
-        self.script_data.configuration.notify_on_end = value
+        self.script_data.get_config().notify_on_end = value
     
     def on_save(self):
         self.router.close(self.script_data.copy())

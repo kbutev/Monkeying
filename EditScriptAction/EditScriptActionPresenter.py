@@ -8,8 +8,7 @@ from EditScriptAction.EditScriptActionFieldBuilder import EditScriptActionFieldB
 from EditScriptAction.EditScriptActionWidget import EditScriptActionWidgetProtocol
 from Model.InputEvent import InputEvent
 from Model.KeyboardInputEvent import KeystrokeEvent
-from Model.JSONInputEvent import JSONInputEvent
-from Parser.ScriptActionParser import ScriptActionParserProtocol
+from Parser.ScriptActionParser import ScriptActionParserProtocol, default_event_as_json
 from Presenter.Presenter import Presenter
 from Utilities.Path import Path
 
@@ -68,13 +67,10 @@ class EditScriptActionPresenter(Presenter):
     def close(self):
         self.router.close(self, False)
     
-    def on_type_changed(self, value):
+    def on_type_changed(self, value: str):
         self.widget.reset()
         
-        default_values = JSONInputEvent()
-        default_values.set_defaults(value)
-        default_values.set_time(self.input_event.time())
-        
+        default_values = default_event_as_json(value, time=self.input_event.time())
         self.input_event = self.action_parser.parse_to_event(default_values)
         
         self.widget.fill_values()

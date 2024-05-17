@@ -22,7 +22,7 @@ class ScriptActionsParser(ScriptActionsParserProtocol):
         return json.dumps(events)
     
     def parse_to_list(self, events: ScriptEvents) -> list:
-        return list(map(lambda event: self.inner_parser.parse_to_json(event).values, events.data.copy()))
+        return list(map(lambda event: self.inner_parser.parse_to_json(event), events.data.copy()))
     
     def parse_to_events(self, data) -> ScriptEvents:
         if isinstance(data, str):

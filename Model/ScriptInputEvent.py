@@ -10,7 +10,12 @@ class ScriptInputEvent(InputEvent):
     
     # - Init
     
-    def __init__(self, path: Path):
+    def __init__(self, path):
+        if isinstance(path, str):
+            path = Path(path)
+        
+        assert isinstance(path, Path)
+        
         super(ScriptInputEvent, self).__init__()
         self.timestamp = 0
         self.path = path

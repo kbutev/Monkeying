@@ -60,7 +60,8 @@ class ScriptDataParser(ScriptDataParserProtocol):
         }
     
     def parse_to_json(self, script: ScriptData) -> Any:
-        return json.dumps(self.parse_to_dict(script), indent=self.indent)
+        json_data = self.parse_to_dict(script)
+        return json.dumps(json_data, indent=self.indent)
     
     def parse_to_script(self, data) -> ScriptData:
         if isinstance(data, str):
