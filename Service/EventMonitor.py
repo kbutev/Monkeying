@@ -5,7 +5,7 @@ from pynput import mouse
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
-from Model.Point import Point
+from Utilities.Point import Point
 from Utilities.Logger import LoggerProtocol
 
 

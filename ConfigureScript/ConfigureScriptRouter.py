@@ -1,41 +1,32 @@
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout
 from ConfigureScript.ConfigureScriptPresenter import ConfigureScriptPresenter
 from ConfigureScript.ConfigureScriptWidget import ConfigureScriptWidget
+from Dialog.Dialog import Dialog
 from Model.ScriptData import ScriptData
+from Utilities.Rect import Rect
 
 
-class ConfigureScriptRouterObserver:
-    def on_exit_config_script(self, result: ScriptData): pass
+class ConfigureScriptRouterDelegate:
+    def on_save_script_configuration(self, config: ScriptData): pass
 
 
 class ConfigureScriptRouter:
     
     # - Init
     
-    def __init__(self, script_data: ScriptData, save_on_close):
-        self.observer = None
-        self.widget = None
-        self.presenter = ConfigureScriptPresenter(script_data)
-        self.completion = None
+    def __init__(self, presenter: ConfigureScriptPresenter):
+        self.dialog = None
+        self.presenter = presenter
+        self.delegate = None
     
     # - Properties
     
-    def get_widget(self) -> QDialog: return self.widget
-    def set_widget(self, widget): self.widget = widget
-    def get_observer(self) -> ConfigureScriptRouterObserver: return self.observer
-    def set_observer(self, observer): self.observer = observer
+    def get_delegate(self) -> ConfigureScriptRouterDelegate: return self.delegate
+    def set_delegate(self, delegate): self.delegate = delegate
     
     # - Setup
     
     def setup(self, parent):
-        dialog = QDialog(parent)
-        dialog.setWindowTitle(f'Configurate script')
-        dialog.setWindowFlags(dialog.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
-        dialog.resize(640, 640)
-        dialog.setMinimumSize(640, 640)
-        dialog.setMaximumSize(640, 640)
-        
         layout = QVBoxLayout()
         widget = ConfigureScriptWidget()
         widget.set_delegate(self.presenter)
@@ -44,15 +35,21 @@ class ConfigureScriptRouter:
         layout.addWidget(widget)
         self.presenter.start()
         
-        dialog.setLayout(layout)
+        dialog = Dialog(parent, desired_size=Rect(640, 640))
+        dialog.set_title(f'Configurate script')
+        dialog.set_layout(layout)
+        dialog.set_delegate(self)
         
-        self.widget = dialog
+        self.dialog = dialog
     
     # - Actions
     
-    def close(self, result: ScriptData):
-        self.widget.close()
-        
-        if self.observer is not None:
-            self.observer.on_exit_config_script(result)
-            self.observer = None
+    def close(self):
+        self.delegate.on_save_script_configuration(self.presenter.get_script())
+        self.dialog.close()
+    
+    # - DialogRouter
+    
+    def on_dialog_appear(self, sender): pass
+    def on_dialog_disappear(self, sender): pass
+    def on_dialog_close(self, sender): pass

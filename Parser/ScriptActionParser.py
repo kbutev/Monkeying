@@ -4,7 +4,7 @@ from Model import ScriptAction
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
-from Model.Point import Point
+from Utilities.Point import Point
 from Model.ScriptActionJSON import *
 from Model.ScriptActionType import ScriptActionType
 from Model.ScriptInputEventAction import ScriptInputEventAction
@@ -24,9 +24,6 @@ class ScriptActionParser(ScriptActionParserProtocol):
         pass
     
     def parse_to_json(self, action: ScriptAction) -> dict:
-        assert isinstance(action, ScriptInputEventAction)
-        event = action.get_event()
-        
         result = dict()
         
         def set_point(point):
@@ -38,23 +35,28 @@ class ScriptActionParser(ScriptActionParserProtocol):
             result[KEY_POINT_DT_Y] = point.y
         
         result[KEY_TYPE] = action.action_type().value
-        result[KEY_TIME] = event.time()
+        result[KEY_TIME] = action.time()
         
-        if isinstance(event, KeystrokeEvent):
-            result[KEY_KEYSTROKE] = event.key_as_string()
-        elif isinstance(event, MouseClickEvent):
-            result[KEY_KEYSTROKE] = event.key_as_string()
-            set_point(event.point)
-        elif isinstance(event, MouseMoveEvent):
-            set_point(event.point)
-        elif isinstance(event, MouseScrollEvent):
-            set_point(event.point)
-            set_dt_point(event.scroll_dt)
-        elif isinstance(event, ScriptMessageAction):
-            result[KEY_MESSAGE] = event.message()
-            result[KEY_MESSAGE_NOTIFICATION] = event.notifications_enabled()
-        elif isinstance(event, ScriptRunAction):
-            result[KEY_PATH] = event.path.absolute
+        if isinstance(action, ScriptInputEventAction):
+            event = action.get_event()
+            
+            if isinstance(event, KeystrokeEvent):
+                result[KEY_KEYSTROKE] = event.key_as_string()
+            elif isinstance(event, MouseClickEvent):
+                result[KEY_KEYSTROKE] = event.key_as_string()
+                set_point(event.point)
+            elif isinstance(event, MouseMoveEvent):
+                set_point(event.point)
+            elif isinstance(event, MouseScrollEvent):
+                set_point(event.point)
+                set_dt_point(event.scroll_dt)
+            else:
+                assert False
+        elif isinstance(action, ScriptMessageAction):
+            result[KEY_MESSAGE] = action.message()
+            result[KEY_MESSAGE_NOTIFICATION] = action.notifications_enabled()
+        elif isinstance(action, ScriptRunAction):
+            result[KEY_PATH] = action.path.absolute
         else:
             assert False
         

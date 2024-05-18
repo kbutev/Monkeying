@@ -1,33 +1,31 @@
 from typing import Protocol
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout
+
+from ConfigureScript.ConfigureScriptPresenter import ConfigureScriptPresenter
 from ConfigureScript.ConfigureScriptRouter import ConfigureScriptRouter
+from Dialog.Dialog import Dialog
 from EditScriptAction.EditScriptActionRouter import EditScriptActionRouter
+from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptData import ScriptData
 from OpenScriptView.EditScriptPresenter import EditScriptPresenter
 from OpenScriptView.OpenScriptWidget import OpenScriptWidget
 from OpenScriptView.RunScriptPresenter import RunScriptPresenter
 
 
-class OpenScriptRouterObserver(Protocol):
-    def on_script_closed(self): pass
-
-
 class OpenScriptRouter(Protocol):
     
     # - Init
     
-    def __init__(self, parent, script_data: ScriptData):
-        self.observer = None
-        self.parent = parent
+    def __init__(self, parent_dialog: Dialog, script_data: ScriptData):
+        self.parent_dialog = parent_dialog
         self.widget = OpenScriptWidget()
         self.edit_script_presenter = EditScriptPresenter(script_data)
         self.run_script_presenter = RunScriptPresenter(script_data)
+        self.config_script_presenter = None
         self.current_dialog = None
     
     # - Properties
     
-    def get_observer(self) -> OpenScriptRouterObserver: return self.observer
-    def set_observer(self, observer): self.observer = observer
     def get_script_data(self) -> ScriptData: return self.edit_script_presenter.get_script_data()
     
     # - Setup
@@ -55,8 +53,6 @@ class OpenScriptRouter(Protocol):
         assert parent is not None
         assert item is not None
         
-        current_dialog = QDialog(parent)
-        current_dialog.setWindowTitle(f'Run {item}')
         layout = QVBoxLayout()
         
         script_widget = OpenScriptWidget()
@@ -64,10 +60,13 @@ class OpenScriptRouter(Protocol):
         self.run_script_presenter.set_widget(script_widget.run_widget)
         
         layout.addWidget(script_widget)
-        current_dialog.setLayout(layout)
         
-        self.current_dialog = current_dialog
-        current_dialog.exec()
+        dialog = Dialog(parent)
+        dialog.set_title(f'Run {item}')
+        dialog.set_layout(layout)
+        dialog.set_delegate(self)
+        self.current_dialog = dialog
+        dialog.present()
     
     def insert_script_action(self, parent, action):
         router = EditScriptActionRouter(True, 0, action, self.edit_script_presenter)
@@ -80,24 +79,11 @@ class OpenScriptRouter(Protocol):
         router.widget.exec()
     
     def configure_script(self, parent):
-        router = ConfigureScriptRouter(self.get_script_data(), True)
-        router.observer = self
+        presenter = ConfigureScriptPresenter(self.get_script_data())
+        router = ConfigureScriptRouter(presenter)
+        router.set_delegate(self)
         router.setup(parent)
-        router.widget.exec()
-    
-    def on_close(self):
-        # When window closes: stop services
-        self.run_script_presenter.stop()
-        self.edit_script_presenter.stop()
-        self.observer.on_script_closed()
-    
-    def on_exit_config_script(self, result: ScriptData):
-        self.run_script_presenter.update_script_configuration(result)
-        self.edit_script_presenter.update_script_configuration(result)
-        
-        # Update window title
-        script_name = result.info.name
-        self.parent.setWindowTitle(f'Run {script_name}')
+        router.dialog.present()
     
     def on_current_tab_changed(self, index):
         if index == 0:
@@ -106,3 +92,20 @@ class OpenScriptRouter(Protocol):
         else:
             self.run_script_presenter.stop()
             self.edit_script_presenter.start()
+    
+    # - DialogRouter
+    
+    def on_dialog_appear(self, sender): pass
+    def on_dialog_disappear(self, sender): pass
+    
+    def on_dialog_close(self, sender):
+        # When dialog closes: stop services
+        self.run_script_presenter.stop()
+        self.edit_script_presenter.stop()
+    
+    # - ConfigureScriptRouterDelegate
+    
+    def on_save_script_configuration(self, script: ScriptData):
+        self.run_script_presenter.update_script_configuration(script)
+        self.edit_script_presenter.update_script_configuration(script)
+        self.parent_dialog.set_title(f'Run {script.get_info().name}')

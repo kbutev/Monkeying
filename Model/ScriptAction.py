@@ -5,6 +5,8 @@ from Model.ScriptActionType import ScriptActionType
 
 
 class ScriptAction(Protocol):
+    def copy(self): return None
+    
     def time(self): assert False
     def set_time(self, value): assert False
     def action_type(self) -> ScriptActionType: return None

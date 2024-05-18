@@ -2,7 +2,7 @@ from typing import Protocol
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QDoubleValidator, QRegularExpressionValidator
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QCheckBox
-from Model.Point import Point
+from Utilities.Point import Point
 
 
 class EditScriptActionFieldDelegate(Protocol):

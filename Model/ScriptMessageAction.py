@@ -9,11 +9,15 @@ class ScriptMessageAction(ScriptAction):
     
     # - Init
     
-    def __init__(self, message_string: str, notification):
+    def __init__(self, message_string: str, notification, time=0):
         super(ScriptMessageAction, self).__init__()
-        self.timestamp = 0
+        self.timestamp = time
         self.message_string = message_string
         self.notification = notification
+    
+    def copy(self):
+        result = ScriptMessageAction(self.message_string, self.notification, self.time())
+        return result
     
     # - Properties
     

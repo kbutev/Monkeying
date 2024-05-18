@@ -17,6 +17,11 @@ class KeystrokeEvent(InputEvent):
         self.key = None # Key or KeyCode
         self.set_key(key)
     
+    def copy(self):
+        result = KeystrokeEvent(self.press, self.key)
+        result.timestamp = self.timestamp
+        return result
+    
     # - Properties
     
     def time(self):

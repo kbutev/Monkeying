@@ -5,9 +5,18 @@ from Model.ScriptActionType import ScriptActionType
 
 class ScriptInputEventAction(ScriptAction):
     
-    def __init__(self, type: ScriptActionType, event: InputEvent):
+    # - Init
+    
+    def __init__(self, type: ScriptActionType, event: InputEvent, time=0):
         self.type = type
         self.event = event
+        self.set_time(time)
+    
+    def copy(self):
+        result = ScriptInputEventAction(self.type, self.event, self.time())
+        return result
+    
+    # - Properties
     
     def time(self):
         return self.event.time()

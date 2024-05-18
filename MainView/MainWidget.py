@@ -1,12 +1,15 @@
 from typing import Protocol
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
+
+from Dialog.Dialog import DialogRouter
 from MainView.RecordScriptWidget import RecordScriptWidget
 from MainView.SettingsWidget import SettingsWidget
 from MainView.ShowScriptsWidget import ShowScriptsWidget
 
 
 class MainWidgetDelegate(Protocol):
+    def get_router(self) -> DialogRouter: return None
     def on_current_tab_changed(self, index): pass
 
 
@@ -47,3 +50,9 @@ class MainWidget(QTabWidget):
         # Do not close the window when escape is pressed
         if event.key() != QtCore.Qt.Key.Key_Escape:
             super(MainWidget, self).keyPressEvent(event)
+    
+    # - DialogRouter
+    
+    def on_dialog_appear(self, sender): self.delegate.get_router().on_dialog_appear(sender)
+    def on_dialog_disappear(self, sender): self.delegate.get_router().on_dialog_disappear(sender)
+    def on_dialog_close(self, sender): self.delegate.get_router().on_dialog_close(sender)

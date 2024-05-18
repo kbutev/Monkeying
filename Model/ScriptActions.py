@@ -7,7 +7,12 @@ class ScriptActions:
     data: [ScriptAction]
     
     def copy(self):
-        return ScriptActions(self.data.copy())
+        result = []
+        
+        for action in self.data:
+            result.append(action.copy())
+        
+        return ScriptActions(result)
     
     def __cmp__(self):
         return self.copy()

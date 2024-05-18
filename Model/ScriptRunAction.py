@@ -11,15 +11,19 @@ class ScriptRunAction(ScriptAction):
     
     # - Init
     
-    def __init__(self, path):
+    def __init__(self, path, time=0):
         if isinstance(path, str):
             path = Path(path)
         
         assert isinstance(path, Path)
         
         super(ScriptRunAction, self).__init__()
-        self.timestamp = 0
+        self.timestamp = time
         self.path = path
+    
+    def copy(self):
+        result = ScriptRunAction(self.path, self.time())
+        return result
     
     # - Properties
     

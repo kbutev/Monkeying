@@ -3,10 +3,12 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
 from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresenter
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
+from Dialog.Dialog import Dialog
 from EditScriptAction.EditScriptActionPresenter import EditScriptActionPresenter
 from EditScriptAction.EditScriptActionWidget import EditScriptActionWidget
 from Model.ScriptAction import ScriptAction
 from OpenScriptView.EditScriptPresenter import EditScriptPresenter
+from Utilities.Rect import Rect
 
 
 class EditScriptActionRouter(Protocol):
@@ -28,34 +30,25 @@ class EditScriptActionRouter(Protocol):
     # - Setup
     
     def setup(self, parent):
-        dialog = QDialog(parent)
-        dialog.setWindowTitle(f'Edit action')
-        dialog.setWindowFlags(dialog.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
-        dialog.resize(640, 640)
-        dialog.setMinimumSize(640, 640)
-        dialog.setMaximumSize(640, 640)
-        
-        layout = QVBoxLayout()
         widget = EditScriptActionWidget()
         widget.set_delegate(self.edit_action_presenter)
         self.edit_action_presenter.set_router(self)
         self.edit_action_presenter.set_widget(widget)
-        layout.addWidget(widget)
-        self.edit_action_presenter.start()
         
+        dialog = Dialog(parent, desired_size=Rect(640, 640))
+        dialog.set_title(f'Edit action')
+        layout = QVBoxLayout()
+        layout.addWidget(widget)
         dialog.setLayout(layout)
         
         self.widget = dialog
+        
+        self.edit_action_presenter.start()
     
     # - Actions
     
     def prompt_choose_key_dialog(self, sender):
-        dialog = QDialog(self.widget)
-        dialog.setWindowTitle(f'Choose key')
-        dialog.setWindowFlags(dialog.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
-        dialog.resize(320, 320)
-        dialog.setMinimumSize(320, 320)
-        dialog.setMaximumSize(320, 320)
+        dialog = Dialog(self.widget, desired_size=Rect(320, 320))
         
         layout = QVBoxLayout()
         widget = ChooseKeyboardKeyWidget()
@@ -63,9 +56,10 @@ class EditScriptActionRouter(Protocol):
         widget.set_delegate(presenter)
         layout.addWidget(widget)
         presenter.start()
-        dialog.setLayout(layout)
         
-        dialog.exec()
+        dialog.set_title(f'Choose key')
+        dialog.set_layout(layout)
+        dialog.present()
     
     def close(self):
         assert self.widget is not None

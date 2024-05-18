@@ -22,10 +22,8 @@ from Utilities.Path import Path
 
 class RecordScriptPresenterRouter(Protocol):
     def enable_tabs(self, value): pass
-    
     def pick_save_file(self, directory) -> Path: pass
-    
-    def configure_script(self, script_path, parent): pass
+    def configure_script(self, parent, script: ScriptData): pass
 
 
 class RecordScriptPresenter(Presenter):
@@ -135,14 +133,22 @@ class RecordScriptPresenter(Presenter):
             self.widget.stop_recording(sender=self)
     
     def configure_script(self):
-        self.router.configure_script(self.widget, self.get_script_config())
+        actions = self.get_recorded_events_as_actions()
+        info = self.get_script_info().copy()
+        config = self.get_script_config().copy()
+        self.router.configure_script(self.widget, ScriptData(actions, info, config))
+    
+    def update_script_configuration(self, result: ScriptData):
+        # ignore actions
+        self.script_info = result.get_info().copy()
+        self.script_config = result.get_config().copy()
     
     def save_recording(self):
         assert self.router is not None
         
         actions = self.get_recorded_events_as_actions()
         info = self.get_script_info().copy()
-        config = self.get_script_config()
+        config = self.get_script_config().copy()
         
         self.logger.info(f'RecordScriptPresenter save {info.name}')
         scripts_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)

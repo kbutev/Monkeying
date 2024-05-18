@@ -1,7 +1,7 @@
 from Model.InputEvent import InputEvent
 from pynput.mouse import Button as MouseKey
 from Model.KeyPressType import KeyPressType
-from Model.Point import Point
+from Utilities.Point import Point
 
 
 FLOAT_ROUND_DECIMALS = 3
@@ -16,9 +16,13 @@ class MouseClickEvent(InputEvent):
         self.timestamp = 0
         self.press = press
         self.key = key
-        self.point = None
-        self.set_point(point)
+        self.point = point
         self.set_key(key)
+    
+    def copy(self):
+        result = MouseClickEvent(self.press, self.key, self.point)
+        result.timestamp = self.timestamp
+        return result
     
     # - Properties
     

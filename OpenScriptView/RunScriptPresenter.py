@@ -58,6 +58,7 @@ class RunScriptPresenter(Presenter):
     def set_widget(self, widget): self.widget = widget
     def get_router(self) -> RunScriptPresenterRouter: return self.router
     def set_router(self, router): self.router = router
+    def get_script(self) -> ScriptData: return self.script_data
     def get_script_actions(self) -> ScriptActions: return self.script_data.get_actions()
     def get_script_actions_as_strings(self) -> []: return self.action_description_parser.parse_actions(self.get_script_actions())
     

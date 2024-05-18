@@ -4,7 +4,7 @@ from Model.ScriptData import ScriptData
 
 
 class ConfigureScriptPresenterRouter(Protocol):
-    def close(self, result: ScriptData): pass
+    def close(self): pass
 
 
 class ConfigureScriptPresenterProtocol(Protocol):
@@ -31,6 +31,7 @@ class ConfigureScriptPresenter:
     def set_widget(self, widget): self.widget = widget
     def get_router(self) -> ConfigureScriptPresenterRouter: return self.router
     def set_router(self, router): self.router = router
+    def get_script(self) -> ScriptData: return self.script_data.copy()
     
     # - Setup
     
@@ -69,4 +70,4 @@ class ConfigureScriptPresenter:
         self.script_data.get_config().notify_on_end = value
     
     def on_save(self):
-        self.router.close(self.script_data.copy())
+        self.router.close()
