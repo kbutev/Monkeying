@@ -1,8 +1,8 @@
 from Model.InputEvent import InputEvent
 from pynput.mouse import Button as MouseKey
-from Model.InputEventType import InputEventType
 from Model.KeyPressType import KeyPressType
 from Model.Point import Point
+
 
 FLOAT_ROUND_DECIMALS = 3
 
@@ -33,15 +33,6 @@ class MouseClickEvent(InputEvent):
     def key_as_string(self) -> str:
         return self.key.name
     
-    def event_type(self) -> InputEventType:
-        match self.press:
-            case KeyPressType.PRESS:
-                return InputEventType.MOUSE_PRESS
-            case KeyPressType.RELEASE:
-                return InputEventType.MOUSE_RELEASE
-            case KeyPressType.CLICK:
-                return InputEventType.MOUSE_CLICK
-    
     def value_as_string(self) -> str:
         return f'{self.key} @ ({self.point.x}, {self.point.y})'
     
@@ -58,6 +49,9 @@ class MouseClickEvent(InputEvent):
     
     def set_point(self, point):
         self.point = point
+    
+    def press_type(self) -> KeyPressType:
+        return self.press
 
 
 class MouseMoveEvent(InputEvent):
@@ -71,9 +65,6 @@ class MouseMoveEvent(InputEvent):
     def time(self): return self.timestamp
     
     def set_time(self, value): self.timestamp = round(value, FLOAT_ROUND_DECIMALS)
-    
-    def event_type(self) -> InputEventType:
-        return InputEventType.MOUSE_MOVE
     
     def value_as_string(self) -> str:
         return f'({self.point.x}, {self.point.y})'
@@ -98,9 +89,6 @@ class MouseScrollEvent(InputEvent):
     def time(self): return self.timestamp
     
     def set_time(self, value): self.timestamp = round(value, FLOAT_ROUND_DECIMALS)
-    
-    def event_type(self) -> InputEventType:
-        return InputEventType.MOUSE_SCROLL
     
     def value_as_string(self) -> str:
         return f'({self.scroll_dt.x}, {self.scroll_dt.y}) @ ({self.point.x}, {self.point.y})'

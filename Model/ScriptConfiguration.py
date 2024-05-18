@@ -21,4 +21,7 @@ class ScriptConfiguration:
         result.notify_on_start = self.notify_on_start
         result.notify_on_end = self.notify_on_end
         return result
+    
+    def __cmp__(self):
+        return self.copy()
 

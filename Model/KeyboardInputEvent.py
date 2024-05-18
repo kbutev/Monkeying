@@ -1,6 +1,6 @@
 from Model.InputEvent import InputEvent
-from Model.InputEventType import InputEventType
 from Model.KeyPressType import KeyPressType
+from Model.ScriptActionType import ScriptActionType
 from Parser.KeyboardKeyParser import key_to_string, string_to_key
 
 FLOAT_ROUND_DECIMALS = 3
@@ -30,17 +30,20 @@ class KeystrokeEvent(InputEvent):
     def key_as_string(self) -> str:
         return key_to_string(self.key)
     
-    def event_type(self) -> InputEventType:
+    def action_type(self) -> ScriptActionType:
         match self.press:
             case KeyPressType.PRESS:
-                return InputEventType.KEYBOARD_PRESS
+                return ScriptActionType.KEYBOARD_PRESS
             case KeyPressType.RELEASE:
-                return InputEventType.KEYBOARD_RELEASE
+                return ScriptActionType.KEYBOARD_RELEASE
             case KeyPressType.CLICK:
-                return InputEventType.KEYBOARD_CLICK
+                return ScriptActionType.KEYBOARD_CLICK
     
     def value_as_string(self) -> str:
         return f'{self.key}'
     
     def set_key(self, key):
         self.key = string_to_key(key)
+    
+    def press_type(self) -> KeyPressType:
+        return self.press

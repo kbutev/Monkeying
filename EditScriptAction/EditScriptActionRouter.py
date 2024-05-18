@@ -5,7 +5,7 @@ from ChooseKeyboardKey.ChooseKeyboardKeyPresenter import ChooseKeyboardKeyPresen
 from ChooseKeyboardKey.ChooseKeyboardKeyWidget import ChooseKeyboardKeyWidget
 from EditScriptAction.EditScriptActionPresenter import EditScriptActionPresenter
 from EditScriptAction.EditScriptActionWidget import EditScriptActionWidget
-from Model.InputEvent import InputEvent
+from Model.ScriptAction import ScriptAction
 from OpenScriptView.EditScriptPresenter import EditScriptPresenter
 
 
@@ -13,12 +13,17 @@ class EditScriptActionRouter(Protocol):
     
     # - Init
     
-    def __init__(self, is_insert: bool, event_index, input_event: InputEvent, edit_script_presenter: EditScriptPresenter):
+    def __init__(self, is_insert: bool, action_index, action: ScriptAction, edit_script_presenter: EditScriptPresenter):
         self.widget = None
         self.is_insert = is_insert
         script_path = edit_script_presenter.get_script_path()
-        self.edit_action_presenter = EditScriptActionPresenter(script_path, event_index, input_event)
         self.edit_script_presenter = edit_script_presenter
+        self.edit_action_presenter = EditScriptActionPresenter(edit_script_presenter, script_path, action_index, action)
+    
+    # - Properties
+    
+    def is_insert_action(self) -> bool: return self.is_insert
+    def is_edit_action(self) -> bool: return not self.is_insert
     
     # - Setup
     
@@ -62,18 +67,10 @@ class EditScriptActionRouter(Protocol):
         
         dialog.exec()
     
-    def close(self, sender, save_changes):
+    def close(self):
         assert self.widget is not None
-        input_event = sender.input_event
-        event_index = sender.event_index
         self.widget.close()
         self.widget = None
-        
-        if save_changes and isinstance(sender, EditScriptActionPresenter):
-            if self.is_insert:
-                self.edit_script_presenter.on_save_insert_script_action(input_event)
-            else:
-                self.edit_script_presenter.on_save_edit_script_action(event_index, input_event)
     
     def on_key_chosen(self, sender, dialog, result_event):
         dialog.close()

@@ -26,6 +26,9 @@ class ScriptInfo:
         result.date_modified = self.date_modified
         return result
     
+    def __cmp__(self):
+        return self.copy()
+    
     # - Properties
     
     def get_version(self) -> str: return self.version

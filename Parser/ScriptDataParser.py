@@ -48,8 +48,8 @@ class ScriptDataParser(ScriptDataParserProtocol):
     def set_indent(self, value: int): self.indent = value
 
     def parse_to_dict(self, script: ScriptData) -> dict:
-        events = self.actions_parser.parse_to_list(script.events)
-        info = self.parse_script_info_to_dict(script.info, script.events.count())
+        events = self.actions_parser.parse_to_list(script.get_actions())
+        info = self.parse_script_info_to_dict(script.info, script.get_actions().count())
         config = self.parse_script_config_to_dict(script.config)
         return {
             self.root: {
@@ -68,7 +68,7 @@ class ScriptDataParser(ScriptDataParserProtocol):
             data = json.loads(data)
         
         contents = data[self.root]
-        events = self.actions_parser.parse_to_events(contents[JSON_EVENTS])
+        events = self.actions_parser.parse_to_actions(contents[JSON_EVENTS])
         info = self.parse_json_to_script_info(contents[JSON_INFO])
         config = self.parse_json_to_script_config(contents[JSON_CONFIGURATION])
         script = ScriptData(events, info, config)

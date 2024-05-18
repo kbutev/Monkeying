@@ -1,5 +1,5 @@
-from Model.InputEventType import InputEventType
 from pynput.mouse import Button as MouseKey
+from Model.ScriptActionType import ScriptActionType
 
 
 KEY_TIME = "t"
@@ -16,9 +16,9 @@ KEY_PATH = "path"
 
 def default_event_as_json(type, time=0) -> dict:
     if isinstance(type, str):
-        type = InputEventType(type)
+        type = ScriptActionType(type)
     
-    assert isinstance(type, InputEventType)
+    assert isinstance(type, ScriptActionType)
     
     result = dict()
     result[KEY_TYPE] = type.value
@@ -26,11 +26,25 @@ def default_event_as_json(type, time=0) -> dict:
     if type.is_keyboard():
         result[KEY_KEYSTROKE] = 'x'
     elif type.is_mouse():
-        result[KEY_KEYSTROKE] = MouseKey.right.value
-    elif type == InputEventType.MESSAGE:
+        if (type == ScriptActionType.MOUSE_PRESS or
+                type == ScriptActionType.MOUSE_RELEASE or
+                type == ScriptActionType.MOUSE_CLICK):
+            result[KEY_KEYSTROKE] = MouseKey.left.name
+        
+        if (type == ScriptActionType.MOUSE_PRESS or
+                type == ScriptActionType.MOUSE_RELEASE or
+                type == ScriptActionType.MOUSE_MOVE or
+                type == ScriptActionType.MOUSE_CLICK):
+            result[KEY_POINT_X] = 0
+            result[KEY_POINT_Y] = 0
+        
+        if type == ScriptActionType.MOUSE_SCROLL:
+            result[KEY_POINT_DT_X] = 0
+            result[KEY_POINT_DT_Y] = 0
+    elif type == ScriptActionType.MESSAGE:
         result[KEY_MESSAGE] = ''
         result[KEY_MESSAGE_NOTIFICATION] = False
-    elif type == InputEventType.RUN_SCRIPT:
+    elif type == ScriptActionType.RUN_SCRIPT:
         result[KEY_PATH] = ''
     
     result[KEY_TIME] = str(time)

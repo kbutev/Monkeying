@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import *
 from kink import inject, di
 
-from Model.InputEvent import InputEventDescription
+from Model.ScriptActionDescription import ScriptActionDescription
 
 
 @inject(use_factory=True)
@@ -20,7 +20,7 @@ class RecordScriptTableDataSource:
     def item(self, column, row) -> QTableWidgetItem:
         assert column <= 2
         
-        entry: InputEventDescription = self.data[row]
+        entry: ScriptActionDescription = self.data[row]
         
         match column:
             case 0: return QTableWidgetItem(entry.timestamp)

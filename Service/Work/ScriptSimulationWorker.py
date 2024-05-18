@@ -2,15 +2,13 @@ import enum
 import threading
 from PyQt5.QtCore import QThread
 from kink import di
-
 from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptData import ScriptData
 from Model.ScriptInfo import ScriptInfo
 from Parser.ScriptActionParser import ScriptActionParserProtocol
 from Service.OSNotificationCenter import OSNotificationCenterProtocol
-from Service.ScriptStorage import ScriptStorage
-from Service.Work.EventExecutionBuilder import EventExecutionBuilderProtocol
-from Service.Work.EventExecutionCluster import ScriptExecution
+from Service.Work.ScriptActionExecutionBuilder import ScriptActionExecutionBuilderProtocol
+from Service.Work.ScriptActionExecutionCluster import ScriptActionScriptExecution
 from Utilities.Logger import LoggerProtocol
 
 
@@ -67,9 +65,9 @@ class ScriptSimulationWorker(QThread):
         
         return result
     
-    def current_event_index(self) -> int:
+    def current_action_index(self) -> int:
         with self.lock:
-            result = self.current_execution.current_event_index()
+            result = self.current_execution.current_action_index()
         
         return result
     
@@ -91,8 +89,9 @@ class ScriptSimulationWorker(QThread):
     def duration(self) -> float:
         return self.current_execution.duration()
     
-    def build_execution_script(self) -> ScriptExecution:
-        return ScriptExecution(self.script_path, self.script_data.events, di[EventExecutionBuilderProtocol])
+    def build_execution_script(self) -> ScriptActionScriptExecution:
+        builder = di[ScriptActionExecutionBuilderProtocol]
+        return ScriptActionScriptExecution(self.script_path, self.script_data.get_actions(), builder)
     
     def notification_center(self) -> OSNotificationCenterProtocol:
         return di[OSNotificationCenterProtocol]
@@ -102,7 +101,7 @@ class ScriptSimulationWorker(QThread):
     def run(self):
         assert self._state is ScriptSimulationWorkerState.IDLE
         
-        self.logger.info('EventSimulatorWorker started')
+        self.logger.info('ScriptSimulatorWorker started')
         
         with self.lock:
             self._state = ScriptSimulationWorkerState.RUNNING
@@ -126,9 +125,9 @@ class ScriptSimulationWorker(QThread):
         self.show_end_notification()
         
         if not self.is_cancelled():
-            self.logger.info('EventSimulatorWorker ended')
+            self.logger.info('ScriptSimulatorWorker ended')
         else:
-            self.logger.info('EventSimulatorWorker cancelled')
+            self.logger.info('ScriptSimulatorWorker cancelled')
     
     def cancel(self):
         with self.lock:

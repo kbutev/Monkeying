@@ -69,13 +69,13 @@ class OpenScriptRouter(Protocol):
         self.current_dialog = current_dialog
         current_dialog.exec()
     
-    def insert_script_action(self, parent, input_event):
-        router = EditScriptActionRouter(True, 0, input_event, self.edit_script_presenter)
+    def insert_script_action(self, parent, action):
+        router = EditScriptActionRouter(True, 0, action, self.edit_script_presenter)
         router.setup(parent)
         router.widget.exec()
     
-    def edit_script_action(self, parent, event_index, input_event):
-        router = EditScriptActionRouter(False, event_index, input_event, self.edit_script_presenter)
+    def edit_script_action(self, parent, action_index, action):
+        router = EditScriptActionRouter(False, action_index, action, self.edit_script_presenter)
         router.setup(parent)
         router.widget.exec()
     

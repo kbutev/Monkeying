@@ -1,7 +1,7 @@
 from typing import Protocol
 
 
-class EventExecution(Protocol):
+class ScriptActionExecution(Protocol):
     
     def is_running(self) -> bool: return False
     

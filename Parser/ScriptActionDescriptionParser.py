@@ -1,22 +1,24 @@
 from dataclasses import dataclass
 from typing import Protocol
 from kink import inject, di
-from Model.InputEvent import InputEventDescription, InputEvent
-from Model.InputEventType import InputEventType
-from Parser.ScriptActionParser import ScriptActionParser, ScriptActionParserProtocol
+from Model.ScriptActionDescription import ScriptActionDescription
+from Model.ScriptActionType import ScriptActionType
+from Model.ScriptActions import ScriptActions
+from Model.ScriptInputEventAction import ScriptInputEventAction
+from Parser.ScriptActionParser import ScriptActionParserProtocol
 
 
 @dataclass
 class Grouping:
-    type: InputEventType
+    type: ScriptActionType
     
-    def match_event(self, event):
-        return event.event_type() == self.type
+    def match_action(self, action):
+        return action.action_type() == self.type
 
 
 class ScriptActionDescriptionParserProtocol(Protocol):
-    def parse(self, event) -> InputEventDescription: pass
-    def parse_list(self, events, group_options: Grouping = None) -> [InputEventDescription]: pass
+    def parse(self, action) -> ScriptActionDescription: pass
+    def parse_actions(self, actions: ScriptActions, group_options: Grouping = None) -> [ScriptActionDescription]: pass
 
 
 @inject(use_factory=True, alias=ScriptActionDescriptionParserProtocol)
@@ -25,36 +27,30 @@ class ScriptActionDescriptionParser(ScriptActionDescriptionParserProtocol):
     def __init__(self):
         self.inner_parser = di[ScriptActionParserProtocol]
     
-    def parse(self, event) -> InputEventDescription:
-        if not isinstance(event, InputEvent):
-            event = self.inner_parser.parse_to_json(event)
-        
-        assert isinstance(event, InputEvent)
-        
-        timestamp = "{:.3f}".format(event.time())
-        type = event.event_type().name
-        value = event.value_as_string()
-        result = InputEventDescription(timestamp, type, value)
-        return result
+    def parse(self, action) -> ScriptActionDescription:
+        timestamp = "{:.3f}".format(action.time())
+        type = action.action_type().name
+        value = action.value_as_string()
+        return ScriptActionDescription(timestamp, type, value)
     
-    def parse_list(self, events, group_options: Grouping = None) -> [InputEventDescription]:
+    def parse_actions(self, actions: ScriptActions, group_options: Grouping = None) -> [ScriptActionDescription]:
         result = []
         previous_events = []
         group_enabled = group_options is not None
         
-        for event in events:
+        for action in actions.data:
             
             # Group logic
             if group_enabled:
-                if group_options.match_event(event) and len(previous_events) >= 2:
-                    if group_options.match_event(previous_events[0]) and group_options.match_event(previous_events[1]):
+                if group_options.match_action(action) and len(previous_events) >= 2:
+                    if group_options.match_action(previous_events[0]) and group_options.match_action(previous_events[1]):
                         result.pop()
             
             if len(previous_events) >= 2:
                 previous_events.pop(0)
             
-            result.append(self.parse(event))
-            previous_events.append(event)
+            result.append(self.parse(action))
+            previous_events.append(action)
         
         return result
 

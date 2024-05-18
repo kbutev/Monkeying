@@ -2,9 +2,6 @@ import threading
 import time
 from PyQt5.QtCore import QThread
 from kink import di
-
-from Model.ScriptEvents import ScriptEvents
-from Service.ScriptStorage import ScriptStorage
 from Service.EventMonitor import MouseEventMonitor, KeyboardEventMonitor
 from Utilities.Logger import LoggerProtocol
 
@@ -18,7 +15,7 @@ class EventMonitorWorker(QThread):
         
         self.lock = threading.Lock()
         
-        self.events = ScriptEvents([])
+        self.events = []
         self.start_time = 0
         self.filter_keys = []
         
@@ -32,9 +29,9 @@ class EventMonitorWorker(QThread):
     
     # - Properties
     
-    def get_events(self) -> ScriptEvents:
+    def get_events(self) -> []:
         with self.lock:
-            result = ScriptEvents(self.events.data.copy())
+            result = self.events.copy()
         
         return result
     
@@ -63,33 +60,33 @@ class EventMonitorWorker(QThread):
     
     def on_mouse_move(self, event):
         event.set_time(self.elapsed_time())
-        self.events.data.append(event)
+        self.events.append(event)
     
     def on_mouse_press(self, event):
         event.set_time(self.elapsed_time())
-        self.events.data.append(event)
+        self.events.append(event)
     
     def on_mouse_release(self, event):
         event.set_time(self.elapsed_time())
-        self.events.data.append(event)
+        self.events.append(event)
     
     def on_mouse_scroll(self, event):
         event.set_time(self.elapsed_time())
-        self.events.data.append(event)
+        self.events.append(event)
     
     def on_keyboard_press(self, event):
         if event.key in self.filter_keys:
             return
         
         event.set_time(self.elapsed_time())
-        self.events.data.append(event)
+        self.events.append(event)
     
     def on_keyboard_release(self, event):
         if event.key in self.filter_keys:
             return
         
         event.set_time(self.elapsed_time())
-        self.events.data.append(event)
+        self.events.append(event)
 
 
 class EventMonitorManager:
@@ -107,7 +104,7 @@ class EventMonitorManager:
     
     def is_running(self) -> bool: return self.running
     
-    def get_events(self) -> ScriptEvents:
+    def get_events(self) -> []:
         assert self.worker is not None
         return self.worker.get_events()
     

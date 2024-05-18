@@ -2,12 +2,14 @@ import time
 from kink import di
 from typing import Protocol
 from PyQt5.QtCore import QTimer
-from Model.InputEventType import InputEventType
+from Model.ScriptActionType import ScriptActionType
+from Model.ScriptActions import ScriptActions
 from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptData import ScriptData
-from Model.ScriptEvents import ScriptEvents
 from Model.ScriptInfo import ScriptInfo
+from Model.ScriptInputEventAction import ScriptInputEventAction
 from Parser.ScriptActionDescriptionParser import ScriptActionDescriptionParserProtocol, Grouping
+from Parser.ScriptActionTypeParser import ScriptActionTypeParserProtocol
 from Presenter.Presenter import Presenter
 from Service.EventMonitor import KeyboardEventMonitor
 from Service.EventMonitorManager import EventMonitorManager
@@ -20,8 +22,11 @@ from Utilities.Path import Path
 
 class RecordScriptPresenterRouter(Protocol):
     def enable_tabs(self, value): pass
+    
     def pick_save_file(self, directory) -> Path: pass
+    
     def configure_script(self, script_path, parent): pass
+
 
 class RecordScriptPresenter(Presenter):
     
@@ -35,7 +40,8 @@ class RecordScriptPresenter(Presenter):
         
         self.settings = di[SettingsManagerProtocol]
         self.keyboard_monitor = di[KeyboardEventMonitor]
-        self.event_parser = di[ScriptActionDescriptionParserProtocol]
+        self.description_parser = di[ScriptActionDescriptionParserProtocol]
+        self.action_type_parser = di[ScriptActionTypeParserProtocol]
         
         self.event_monitor = EventMonitorManager()
         self.script_info = ScriptInfo()
@@ -63,9 +69,14 @@ class RecordScriptPresenter(Presenter):
     def set_widget(self, widget): self.widget = widget
     def get_router(self) -> RecordScriptPresenterRouter: return self.router
     def set_router(self, router): self.router = router
-    def get_recorded_events(self) -> ScriptEvents: return self.event_monitor.get_events()
+    def get_recorded_events(self) -> []: return self.event_monitor.get_events()
     def get_script_info(self) -> ScriptInfo: return self.script_info
     def get_script_config(self) -> ScriptConfiguration: return self.script_config
+    def get_recorded_events_as_actions(self) -> ScriptActions:
+        type_parser = self.action_type_parser
+        events = self.get_recorded_events()
+        result = list(map(lambda event: ScriptInputEventAction(type_parser.type_for_input_event(event), event), events))
+        return ScriptActions(result)
     
     # - Setup
     
@@ -124,13 +135,12 @@ class RecordScriptPresenter(Presenter):
             self.widget.stop_recording(sender=self)
     
     def configure_script(self):
-        script = self.script_info
         self.router.configure_script(self.widget, self.get_script_config())
     
     def save_recording(self):
         assert self.router is not None
         
-        events = self.get_recorded_events()
+        actions = self.get_recorded_events_as_actions()
         info = self.get_script_info().copy()
         config = self.get_script_config()
         
@@ -148,7 +158,7 @@ class RecordScriptPresenter(Presenter):
         if info.is_name_default():
             info.name = file_path.stem()
         
-        script = ScriptData(events, info, config)
+        script = ScriptData(actions, info, config)
         ScriptStorage(file_path).write_to_file(script)
         
         self.widget.disable_save_recording()
@@ -172,7 +182,8 @@ class RecordScriptPresenter(Presenter):
         pass
     
     def update_events(self):
-        events = self.get_recorded_events().data
-        events = self.event_parser.parse_list(reversed(events), group_options=Grouping(InputEventType.MOUSE_MOVE))
-        self.widget.set_events_data(events)
+        actions = self.get_recorded_events_as_actions()
+        actions.reverse()
+        descriptions = self.description_parser.parse_actions(actions, group_options=Grouping(ScriptActionType.MOUSE_MOVE))
+        self.widget.set_events_data(descriptions)
 

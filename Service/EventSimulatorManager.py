@@ -75,8 +75,8 @@ class EventSimulatorManager:
         else:
             self.logger.info('EventSimulatorManager on cancel')
     
-    def current_event_index(self) -> int:
-        return self.worker.current_event_index()
+    def current_action_index(self) -> int:
+        return self.worker.current_action_index()
     
     def progress_fraction(self) -> float:
         current = self.worker.elapsed_time()

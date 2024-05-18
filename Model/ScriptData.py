@@ -1,19 +1,19 @@
 from Model.ScriptConfiguration import ScriptConfiguration
-from Model.ScriptEvents import ScriptEvents
+from Model.ScriptActions import ScriptActions
 from Model.ScriptInfo import ScriptInfo
 from Utilities.Path import Path
 
 
 class ScriptData:
     
-    def __init__(self, events=ScriptEvents([]), info=ScriptInfo(), config=ScriptConfiguration()):
-        self.events = events.copy()
+    def __init__(self, actions=ScriptActions([]), info=ScriptInfo(), config=ScriptConfiguration()):
+        self.actions = actions.copy()
         self.info = info.copy()
         self.config = config.copy()
         self.file_path = None
     
-    def get_events(self) -> ScriptEvents: return self.events
-    def set_events(self, value): self.events = value
+    def get_actions(self) -> ScriptActions: return self.actions
+    def set_actions(self, value): self.actions = value
     def get_info(self) -> ScriptInfo: return self.info
     def set_info(self, value): self.info = value
     def get_config(self) -> ScriptConfiguration: return self.config
@@ -23,13 +23,16 @@ class ScriptData:
     
     def copy(self):
         result = ScriptData()
-        result.events = self.events.copy()
+        result.actions = self.actions.copy()
         result.info = self.info.copy()
         result.config = self.config.copy()
         return result
     
-    def sort_events(self):
-        self.events.data.sort()
+    def __copy__(self):
+        return self.copy()
+    
+    def sort_actions(self):
+        self.actions.data.sort()
     
     def update_modified_date(self):
         self.info.update_modified_date()

@@ -1,13 +1,16 @@
 from dataclasses import dataclass
-from Model.InputEvent import InputEvent
+from Model.ScriptAction import ScriptAction
 
 
 @dataclass
-class ScriptEvents:
-    data: [InputEvent]
+class ScriptActions:
+    data: [ScriptAction]
     
     def copy(self):
-        return ScriptEvents(self.data.copy())
+        return ScriptActions(self.data.copy())
+    
+    def __cmp__(self):
+        return self.copy()
     
     def count(self) -> int:
         return len(self.data)
@@ -17,3 +20,6 @@ class ScriptEvents:
     
     def sort(self):
         self.data.sort()
+    
+    def reverse(self):
+        self.data = list(reversed(self.data))

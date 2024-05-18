@@ -1,15 +1,16 @@
 from Model.InputEvent import InputEvent
-from Model.InputEventType import InputEventType
+from Model.ScriptAction import ScriptAction
+from Model.ScriptActionType import ScriptActionType
 
 FLOAT_ROUND_DECIMALS = 3
 
 
-class MessageInputEvent(InputEvent):
+class ScriptMessageAction(ScriptAction):
     
     # - Init
     
     def __init__(self, message_string: str, notification):
-        super(MessageInputEvent, self).__init__()
+        super(ScriptMessageAction, self).__init__()
         self.timestamp = 0
         self.message_string = message_string
         self.notification = notification
@@ -34,8 +35,8 @@ class MessageInputEvent(InputEvent):
     def set_message(self, value):
         self.message_string = value
     
-    def event_type(self) -> InputEventType:
-        return InputEventType.MESSAGE
+    def action_type(self) -> ScriptActionType:
+        return ScriptActionType.MESSAGE
     
     def value_as_string(self) -> str:
         return f'{self.message_string}'

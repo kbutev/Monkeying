@@ -1,12 +1,13 @@
 from Model.InputEvent import InputEvent
-from Model.InputEventType import InputEventType
+from Model.ScriptAction import ScriptAction
+from Model.ScriptActionType import ScriptActionType
 from Utilities.Path import Path
 from Utilities import Path as PathUtil
 
 FLOAT_ROUND_DECIMALS = 3
 
 
-class ScriptInputEvent(InputEvent):
+class ScriptRunAction(ScriptAction):
     
     # - Init
     
@@ -16,7 +17,7 @@ class ScriptInputEvent(InputEvent):
         
         assert isinstance(path, Path)
         
-        super(ScriptInputEvent, self).__init__()
+        super(ScriptRunAction, self).__init__()
         self.timestamp = 0
         self.path = path
     
@@ -47,8 +48,8 @@ class ScriptInputEvent(InputEvent):
         base = self.path.base_path()
         self.path = PathUtil.combine_paths(base, value)
     
-    def event_type(self) -> InputEventType:
-        return InputEventType.RUN_SCRIPT
+    def action_type(self) -> ScriptActionType:
+        return ScriptActionType.RUN_SCRIPT
     
     def value_as_string(self) -> str:
         return f'{self.path.last_component()}'

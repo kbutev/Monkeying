@@ -3,6 +3,7 @@ from kink import di
 from typing import Protocol
 from PyQt5.QtCore import QTimer
 
+from Model.ScriptActions import ScriptActions
 from Model.ScriptData import ScriptData
 from Parser.ScriptActionDescriptionParser import ScriptActionDescriptionParserProtocol
 from Presenter.Presenter import Presenter
@@ -31,7 +32,7 @@ class RunScriptPresenter(Presenter):
         self.running = False
         self.simulator = None
         self.keyboard_monitor = di[KeyboardEventMonitor]
-        self.event_parser = di[ScriptActionDescriptionParserProtocol]
+        self.action_description_parser = di[ScriptActionDescriptionParserProtocol]
         self.settings = di[SettingsManagerProtocol]
         self.play_trigger_key = None
         self.pause_trigger_key = None
@@ -57,8 +58,8 @@ class RunScriptPresenter(Presenter):
     def set_widget(self, widget): self.widget = widget
     def get_router(self) -> RunScriptPresenterRouter: return self.router
     def set_router(self, router): self.router = router
-    def get_script_actions(self) -> []: return self.script_data.events.data
-    def get_script_actions_as_strings(self) -> []: return list(map(lambda event: self.event_parser.parse(event), self.get_script_actions()))
+    def get_script_actions(self) -> ScriptActions: return self.script_data.get_actions()
+    def get_script_actions_as_strings(self) -> []: return self.action_description_parser.parse_actions(self.get_script_actions())
     
     # Setup
     
@@ -197,6 +198,6 @@ class RunScriptPresenter(Presenter):
         pass
     
     def update_events(self):
-        index = self.simulator.current_event_index()
+        index = self.simulator.current_action_index()
         progress = int(self.simulator.progress_fraction() * 100.0)
         self.widget.update_progress(index, progress)
