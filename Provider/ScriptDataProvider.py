@@ -1,10 +1,12 @@
 from typing import Protocol
-
-from PyQt5.QtCore import QThread, pyqtSignal
-
-from Model.ScriptData import ScriptData
+from kink import di
 from Service.ScriptStorage import ScriptStorage
+from Service.ThreadWorkerManager import ThreadWorkerManagerProtocol
 from Utilities.Path import Path
+from Utilities.Threading import run_in_background_with_result
+
+
+THREAD_WORKER_FETCH_LABEL = 'fetch'
 
 
 class ScriptDataProviderProtocol(Protocol):
@@ -12,39 +14,30 @@ class ScriptDataProviderProtocol(Protocol):
     def fetch(self, completion, failure): pass
 
 
-class ScriptDataProviderWorker(QThread):
-    
-    # Signal automatically binds to every unique instance
-    signal_main = pyqtSignal(ScriptData, name='ScriptDataProviderWorker.on_finish')
-    
-    def __init__(self, storage: ScriptStorage, completion, failure):
-        super(ScriptDataProviderWorker, self).__init__()
-        self.storage = storage
-        self.completion = completion
-        self.failure = failure
-        self.signal_main.connect(self.on_finish)
-    
-    def run(self):
-        self.signal_main.emit(self.storage.read_from_file())
-    
-    def on_finish(self, result):
-        if result is None:
-            self.failure(result)
-        else:
-            self.completion(result)
-        
-        self.completion = None
-        self.failure = None
-
-
 class ScriptDataProvider(ScriptDataProviderProtocol):
     
     def __init__(self, file_path: Path):
         assert file_path is not None
         self.storage = ScriptStorage(file_path)
+        self.thread_worker_manager = di[ThreadWorkerManagerProtocol]
     
     def get_file_path(self) -> Path: return self.storage.get_file_path()
     
     def fetch(self, completion, failure):
-        worker = ScriptDataProviderWorker(self.storage, completion, failure)
-        worker.start()
+        if self.thread_worker_manager.is_running_worker(THREAD_WORKER_FETCH_LABEL):
+            return
+        
+        worker = run_in_background_with_result(self.read_storage_data,
+                                               lambda result: self.handle_completion(result, completion, failure))
+        self.thread_worker_manager.add_worker(worker, THREAD_WORKER_FETCH_LABEL)
+    
+    def read_storage_data(self):
+        return self.storage.read_from_file()
+    
+    def handle_completion(self, result, completion, failure):
+        self.thread_worker_manager.remove_worker(THREAD_WORKER_FETCH_LABEL)
+        
+        if result is not None:
+            completion(result)
+        else:
+            failure(None)

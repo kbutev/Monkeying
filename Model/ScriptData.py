@@ -26,6 +26,7 @@ class ScriptData:
         result.actions = self.actions.copy()
         result.info = self.info.copy()
         result.config = self.config.copy()
+        result.file_path = self.file_path.copy()
         return result
     
     def __copy__(self):

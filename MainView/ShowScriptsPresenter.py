@@ -5,9 +5,13 @@ from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
 from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
+from Service.ThreadWorkerManager import ThreadWorkerManagerProtocol
 from Utilities import Path as PathUtils
 from Utilities.Logger import LoggerProtocol
-from Utilities.SimpleWorker import run_in_background
+from Utilities.Threading import run_in_background_with_result
+
+
+THREAD_WORKER_RELOAD_LABEL = 'reload'
 
 
 class ShowScriptsWidgetRouter(Protocol):
@@ -27,6 +31,7 @@ class ShowScriptsPresenter(Presenter):
         self.file_format = settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
         self.scripts = []
         self.logger = di[LoggerProtocol]
+        self.thread_worker_manager = di[ThreadWorkerManagerProtocol]
     
     # - Property
     
@@ -49,9 +54,14 @@ class ShowScriptsPresenter(Presenter):
         self.setup()
     
     def reload_data(self):
+        if self.thread_worker_manager.is_running_worker(THREAD_WORKER_RELOAD_LABEL):
+            return
+        
         self.logger.info('reloading data...')
         
-        run_in_background(self._load_script_data_in_background, self._finish_loading_script_data)
+        worker = run_in_background_with_result(self._load_script_data_in_background,
+                                               self._finish_loading_script_data)
+        self.thread_worker_manager.add_worker(worker, THREAD_WORKER_RELOAD_LABEL)
     
     def _load_script_data_in_background(self):
         result = []
@@ -70,6 +80,8 @@ class ShowScriptsPresenter(Presenter):
         return result
     
     def _finish_loading_script_data(self, result):
+        self.thread_worker_manager.remove_worker(THREAD_WORKER_RELOAD_LABEL)
+        
         self.logger.info(f'finished loading script data, found {len(result)} scripts in work directory')
         
         self.scripts = result

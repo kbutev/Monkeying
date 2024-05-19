@@ -2,7 +2,7 @@ import threading
 from typing import Protocol
 from kink import inject
 from datetime import datetime
-from Utilities.SimpleWorker import current_thread_is_main
+from Utilities.Threading import current_thread_is_main
 
 
 def current_date():

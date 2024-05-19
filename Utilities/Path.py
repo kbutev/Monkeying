@@ -8,6 +8,9 @@ from os.path import isfile, join
 class Path:
     absolute: str
     
+    def copy(self):
+        return Path(self.absolute)
+    
     def is_empty(self) -> bool:
         return len(self.absolute) == 0
     

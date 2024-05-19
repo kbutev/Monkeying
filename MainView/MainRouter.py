@@ -65,6 +65,8 @@ class MainRouter(Protocol):
         assert parent is not None
         assert script_data is not None
         
+        script_data = script_data.copy()
+        
         dialog = Dialog(parent)
         
         router = OpenScriptRouter(dialog, script_data)

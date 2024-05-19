@@ -19,6 +19,9 @@ KEY_HOTKEYS = 'hotkeys'
 KEY_CONFIG = 'config'
 
 
+DEFAULT_INDENT = 2
+
+
 class SettingsManagerField(enum.StrEnum):
     PLAY_HOTKEY = 'play'
     PAUSE_HOTKEY = 'pause'
@@ -55,6 +58,7 @@ class SettingsManager:
         self.hotkeys = {}
         self.config = {}
         self.logger = di[LoggerProtocol]
+        self.indent = DEFAULT_INDENT
         
         if self.file_exists():
             self.read_from_file()
@@ -96,9 +100,13 @@ class SettingsManager:
         self.all_values[key] = value
     
     def data_as_json(self):
-        data = {ROOT: {KEY_VERSION: VERSION, KEY_HOTKEYS: self.hotkeys, KEY_CONFIG: self.config}}
+        data = {
+            ROOT: {
+                KEY_VERSION: VERSION, KEY_HOTKEYS: self.hotkeys, KEY_CONFIG: self.config
+            }
+        }
         
-        return json.dumps(data)
+        return json.dumps(data, indent=self.indent)
     
     def file_exists(self) -> bool:
         path = self.path.absolute

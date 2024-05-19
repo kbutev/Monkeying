@@ -5,9 +5,13 @@ from Parser import KeyboardKeyParser
 from Presenter.Presenter import Presenter
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from kink import di
-
+from Service.ThreadWorkerManager import ThreadWorkerManagerProtocol
 from Utilities.Logger import LoggerProtocol
-from Utilities.SimpleWorker import run_in_background
+from Utilities.Threading import run_in_background
+
+
+THREAD_WORKER_READ_LABEL = 'read'
+THREAD_WORKER_WRITE_LABEL = 'write'
 
 
 class SettingsPresenterRouter(Protocol):
@@ -25,6 +29,7 @@ class SettingsPresenter(Presenter):
         self.widget = None
         self.settings = di[SettingsManagerProtocol]
         self.logger = di[LoggerProtocol]
+        self.thread_worker_manager = di[ThreadWorkerManagerProtocol]
     
     # - Properties
     
@@ -42,8 +47,16 @@ class SettingsPresenter(Presenter):
         pass
     
     def read_settings_from_file(self):
+        if self.thread_worker_manager.is_running_worker(THREAD_WORKER_READ_LABEL):
+            return
+        
         self.logger.info('reading settings...')
-        run_in_background(self.settings.read_from_file, lambda result: self.update_data())
+        worker = run_in_background(self.settings.read_from_file, self._read_settings_from_file_completion)
+        self.thread_worker_manager.add_worker(worker, THREAD_WORKER_READ_LABEL)
+    
+    def _read_settings_from_file_completion(self):
+        self.thread_worker_manager.remove_worker(THREAD_WORKER_READ_LABEL)
+        self.update_data()
     
     def update_data(self):
         self.logger.info('settings values loaded')
@@ -56,7 +69,14 @@ class SettingsPresenter(Presenter):
         self.widget.setup_field(record_hotkey, KeyboardKeyParser.key_to_string(self.settings.field_value(record_hotkey)))
     
     def save_settings(self):
-        run_in_background(self.settings.write_to_file)
+        if self.thread_worker_manager.is_running_worker(THREAD_WORKER_WRITE_LABEL):
+            return
+        
+        worker = run_in_background(self.settings.write_to_file, self._save_settings_completion)
+        self.thread_worker_manager.add_worker(worker, THREAD_WORKER_WRITE_LABEL)
+    
+    def _save_settings_completion(self):
+        self.thread_worker_manager.remove_worker(THREAD_WORKER_WRITE_LABEL)
     
     def assign_hotkey(self, parameter: SettingsManagerField):
         self.router.prompt_choose_key_dialog(parameter)
