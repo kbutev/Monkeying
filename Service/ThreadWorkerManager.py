@@ -23,4 +23,4 @@ class ThreadWorkerManager(ThreadWorkerManagerProtocol):
     
     def remove_worker(self, label):
         assert label in self.workers
-        self.workers[label] = None
+        del self.workers[label]

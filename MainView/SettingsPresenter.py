@@ -3,12 +3,11 @@ from MainView.SettingsWidget import SettingsWidgetProtocol
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Parser import KeyboardKeyParser
 from Presenter.Presenter import Presenter
-from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
+from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol, SettingsManagerValues
 from kink import di
 from Service.ThreadWorkerManager import ThreadWorkerManagerProtocol
 from Utilities.Logger import LoggerProtocol
-from Utilities.Threading import run_in_background
-
+from Utilities.Threading import run_in_background, run_in_background_with_result
 
 THREAD_WORKER_READ_LABEL = 'read'
 THREAD_WORKER_WRITE_LABEL = 'write'
@@ -51,11 +50,29 @@ class SettingsPresenter(Presenter):
             return
         
         self.logger.info('reading settings...')
-        worker = run_in_background(self.settings.read_from_file, self._read_settings_from_file_completion)
+        worker = run_in_background_with_result(self._read_settings_from_file,
+                                               self._read_settings_from_file_completion,
+                                               process_with_param=self.settings.get_path())
         self.thread_worker_manager.add_worker(worker, THREAD_WORKER_READ_LABEL)
     
-    def _read_settings_from_file_completion(self):
+    def _read_settings_from_file(self, path):
+        try:
+            values = SettingsManagerValues({}, {}, {})
+            values.read_from_file(path)
+            return values
+        except Exception as error:
+            self.logger.error(f'Failed to read settings values, error: {error}')
+            return None
+    
+    def _read_settings_from_file_completion(self, result):
         self.thread_worker_manager.remove_worker(THREAD_WORKER_READ_LABEL)
+        
+        if result is not None:
+            self.settings.read_from_data(result)
+        else:
+            self.settings.setup_defaults()
+            self.save_settings()
+        
         self.update_data()
     
     def update_data(self):

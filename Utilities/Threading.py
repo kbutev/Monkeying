@@ -21,7 +21,7 @@ def run_on_main(handle) -> SimpleThreadWorker:
 
 # The returned object must be kept until completion.
 def run_in_background(process_handle, completion_on_main_handle=None) -> SimpleThreadWorker:
-    worker = SimpleThreadWorker(process_handle, completion_on_main_handle, False)
+    worker = SimpleThreadWorker(process_handle, completion_on_main_handle, completion_with_result=False)
     worker.start()
     return worker
 
