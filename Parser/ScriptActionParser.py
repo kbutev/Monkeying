@@ -94,7 +94,7 @@ class ScriptActionParser(ScriptActionParserProtocol):
                 input_event = MouseScrollEvent(point(), dt_point())
         
         if input_event is not None:
-            result = ScriptInputEventAction(action_type, input_event)
+            result = ScriptInputEventAction(action_type, input_event, 0)
         else:
             match action_type:
                 case ScriptActionType.MESSAGE:

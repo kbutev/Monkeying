@@ -74,7 +74,11 @@ class RecordScriptPresenter(Presenter):
     def get_recorded_events_as_actions(self) -> ScriptActions:
         type_parser = self.action_type_parser
         events = self.get_recorded_events()
-        result = list(map(lambda event: ScriptInputEventAction(type_parser.type_for_input_event(event), event), events))
+        
+        result = list(map(lambda event: ScriptInputEventAction(type_parser.type_for_input_event(event),
+                                                               event,
+                                                               event.time()), events))
+        
         return ScriptActions(result)
     
     # - Setup

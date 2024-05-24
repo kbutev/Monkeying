@@ -7,7 +7,7 @@ class ScriptInputEventAction(ScriptAction):
     
     # - Init
     
-    def __init__(self, type: ScriptActionType, event: InputEvent, time=0):
+    def __init__(self, type: ScriptActionType, event: InputEvent, time: float):
         self.type = type
         self.event = event
         self.set_time(time)
