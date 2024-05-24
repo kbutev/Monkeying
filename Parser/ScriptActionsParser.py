@@ -28,7 +28,8 @@ class ScriptActionsParser(ScriptActionsParserProtocol):
         if isinstance(data, str):
             data = json.loads(data)
         
-        assert isinstance(data, list)
+        if not isinstance(data, list):
+            raise ValueError("Bad given script actions data")
         
         result = []
         

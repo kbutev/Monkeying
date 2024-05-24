@@ -6,7 +6,7 @@ from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptData import ScriptData
 from Model.ScriptInfo import ScriptInfo
 from Parser.ScriptActionsParser import ScriptActionsParserProtocol
-
+from Utilities.Logger import LoggerProtocol
 
 JSON_DEFAULT_ROOT = 'root'
 JSON_INFO = 'info'
@@ -41,6 +41,7 @@ class ScriptDataParser(ScriptDataParserProtocol):
     def __init__(self, root=JSON_DEFAULT_ROOT):
         self.root = root
         self.actions_parser = di[ScriptActionsParserProtocol]
+        self.logger = di[LoggerProtocol]
         self.indent = DEFAULT_INDENT
     
     def get_root(self) -> str: return self.root
@@ -66,12 +67,27 @@ class ScriptDataParser(ScriptDataParserProtocol):
     
     def parse_to_script(self, data) -> ScriptData:
         if isinstance(data, str):
-            data = json.loads(data)
+            try:
+                data = json.loads(data)
+            except Exception as error:
+                raise error
+        
+        if not isinstance(data, dict):
+            raise ValueError("Bad given script data")
+        
+        if self.root not in data:
+            raise ValueError("Bad script json, no root")
         
         contents = data[self.root]
-        events = self.actions_parser.parse_to_actions(contents[JSON_EVENTS])
-        info = self.parse_json_to_script_info(contents[JSON_INFO])
-        config = self.parse_json_to_script_config(contents[JSON_CONFIGURATION])
+        
+        def get_value(key):
+            if key not in contents:
+                raise ValueError(f"Bad script json, key '{key}' not found")
+            return contents[key]
+        
+        events = self.actions_parser.parse_to_actions(get_value(JSON_EVENTS))
+        info = self.parse_json_to_script_info(get_value(JSON_INFO))
+        config = self.parse_json_to_script_config(get_value(JSON_CONFIGURATION))
         script = ScriptData(events, info, config)
         return script
     

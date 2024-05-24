@@ -28,7 +28,10 @@ def run_in_background(process_handle, completion_on_main_handle=None) -> SimpleT
 
 # Process handle must return a value, which will be passed to the completion on main.
 # The returned object must be kept until completion.
-def run_in_background_with_result(process_handle, completion_on_main_handle=None) -> SimpleThreadWorker:
-    worker = SimpleThreadWorker(process_handle, completion_on_main_handle, True)
+def run_in_background_with_result(process_handle, completion_on_main_handle, process_with_param=None) -> SimpleThreadWorker:
+    worker = SimpleThreadWorker(process_handle,
+                                completion_on_main_handle,
+                                process_with_param=process_with_param,
+                                completion_with_result=True)
     worker.start()
     return worker

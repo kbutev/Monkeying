@@ -3,6 +3,7 @@ from kink import di
 from Model.ScriptData import ScriptData
 from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
+from Provider.ScriptDataProvider import ScriptDataProvider
 from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Service.ThreadWorkerManager import ThreadWorkerManagerProtocol
@@ -12,6 +13,7 @@ from Utilities.Threading import run_in_background_with_result
 
 
 THREAD_WORKER_RELOAD_LABEL = 'reload'
+THREAD_WORKER_READ_LABEL = 'read_script'
 
 
 class ShowScriptsWidgetRouter(Protocol):
@@ -59,11 +61,11 @@ class ShowScriptsPresenter(Presenter):
         
         self.logger.info('reloading data...')
         
-        worker = run_in_background_with_result(self._load_script_data_in_background,
-                                               self._finish_loading_script_data)
+        worker = run_in_background_with_result(self._load_scripts_data_in_background,
+                                               self._finish_loading_scripts_data)
         self.thread_worker_manager.add_worker(worker, THREAD_WORKER_RELOAD_LABEL)
     
-    def _load_script_data_in_background(self):
+    def _load_scripts_data_in_background(self):
         result = []
         
         file_list = PathUtils.directory_file_list(self.working_dir, self.file_format)
@@ -72,14 +74,18 @@ class ShowScriptsPresenter(Presenter):
         
         for file_path in file_list:
             storage = ScriptStorage(file_path)
-            script = storage.read_from_file()
-            name = script.info.name
-            script_names.append(name)
-            result.append(script)
+            
+            try:
+                script = storage.read_from_file()
+                name = script.info.name
+                script_names.append(name)
+                result.append(script)
+            except Exception:
+                pass
         
         return result
     
-    def _finish_loading_script_data(self, result):
+    def _finish_loading_scripts_data(self, result):
         self.thread_worker_manager.remove_worker(THREAD_WORKER_RELOAD_LABEL)
         
         self.logger.info(f'finished loading script data, found {len(result)} scripts in work directory')
@@ -93,11 +99,27 @@ class ShowScriptsPresenter(Presenter):
         
         self.widget.set_data(script_names)
     
+    def _finish_opening_script(self, result):
+        self.thread_worker_manager.remove_worker(THREAD_WORKER_READ_LABEL)
+        self.router.open_script(self.widget, result)
+    
+    def _finish_opening_script_error(self, result):
+        # TODO: show dialog
+        pass
+    
     # Script actions
     
     def can_open_script(self, item) -> bool: return True
     
     def open_script(self, index):
         assert index >= 0 and index < len(self.scripts)
-        script = self.scripts[index]
-        self.router.open_script(self.widget, script)
+        
+        if self.thread_worker_manager.is_running_worker(THREAD_WORKER_READ_LABEL):
+            return
+
+        script: ScriptData = self.scripts[index]
+        
+        worker = ScriptDataProvider(script.get_file_path())
+        self.thread_worker_manager.add_worker(worker, THREAD_WORKER_READ_LABEL)
+        worker.fetch(self._finish_opening_script, self._finish_opening_script_error)
+

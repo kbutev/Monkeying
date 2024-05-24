@@ -36,18 +36,24 @@ class ScriptStorage:
     def read_from_file(self, permissions='r', encoding="utf-8") -> ScriptData:
         path = self.file_path.absolute
         
-        self.logger.info(f"read data from \'{path}\'")
+        self.logger.info(f"read data from \'{path}\'...")
         
         file = open(path, permissions, encoding=encoding)
         file_contents = file.read()
         
-        if len(file_contents) == 0:
-            # TODO: error handling
-            return None
+        try:
+            if len(file_contents) == 0:
+                raise ValueError("empty file")
+            
+            result = self.script_data_parser.parse_to_script(file_contents)
+        except Exception as error:
+            self.logger.error(f"reading failed, error: {error}")
+            file.close()
+            raise error
         
-        result = self.script_data_parser.parse_to_script(file_contents)
-        result.set_file_path(self.file_path)
         file.close()
+        
+        result.set_file_path(self.file_path)
         
         self.logger.info("data read successfully")
         

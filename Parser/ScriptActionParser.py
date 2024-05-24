@@ -63,28 +63,33 @@ class ScriptActionParser(ScriptActionParserProtocol):
         return result
     
     def parse_to_action(self, json) -> ScriptAction:
-        action_type = ScriptActionType(json[KEY_TYPE])
+        def get_value(key):
+            if key not in json:
+                raise ValueError(f"Bad script action json, key '{key}' not found")
+            return json[key]
         
-        def point() -> Point: return Point(json[KEY_POINT_X], json[KEY_POINT_Y])
-        def dt_point() -> Point: return Point(json[KEY_POINT_DT_X], json[KEY_POINT_DT_Y])
+        action_type = ScriptActionType(get_value(KEY_TYPE))
+        
+        def point() -> Point: return Point(get_value(KEY_POINT_X), get_value(KEY_POINT_Y))
+        def dt_point() -> Point: return Point(get_value(KEY_POINT_DT_X), get_value(KEY_POINT_DT_Y))
         
         input_event = None
         
         match action_type:
             case ScriptActionType.KEYBOARD_PRESS:
-                input_event = KeystrokeEvent(KeyPressType.PRESS, json[KEY_KEYSTROKE])
+                input_event = KeystrokeEvent(KeyPressType.PRESS, get_value(KEY_KEYSTROKE))
             case ScriptActionType.KEYBOARD_RELEASE:
-                input_event = KeystrokeEvent(KeyPressType.RELEASE, json[KEY_KEYSTROKE])
+                input_event = KeystrokeEvent(KeyPressType.RELEASE, get_value(KEY_KEYSTROKE))
             case ScriptActionType.KEYBOARD_CLICK:
-                input_event = KeystrokeEvent(KeyPressType.CLICK, json[KEY_KEYSTROKE])
+                input_event = KeystrokeEvent(KeyPressType.CLICK, get_value(KEY_KEYSTROKE))
             case ScriptActionType.MOUSE_MOVE:
                 input_event = MouseMoveEvent(point())
             case ScriptActionType.MOUSE_PRESS:
-                input_event = MouseClickEvent(KeyPressType.PRESS, json[KEY_KEYSTROKE], point())
+                input_event = MouseClickEvent(KeyPressType.PRESS, get_value(KEY_KEYSTROKE), point())
             case ScriptActionType.MOUSE_RELEASE:
-                input_event = MouseClickEvent(KeyPressType.RELEASE, json[KEY_KEYSTROKE], point())
+                input_event = MouseClickEvent(KeyPressType.RELEASE, get_value(KEY_KEYSTROKE), point())
             case ScriptActionType.MOUSE_CLICK:
-                input_event = MouseClickEvent(KeyPressType.CLICK, json[KEY_KEYSTROKE], point())
+                input_event = MouseClickEvent(KeyPressType.CLICK, get_value(KEY_KEYSTROKE), point())
             case ScriptActionType.MOUSE_SCROLL:
                 input_event = MouseScrollEvent(point(), dt_point())
         
@@ -93,11 +98,11 @@ class ScriptActionParser(ScriptActionParserProtocol):
         else:
             match action_type:
                 case ScriptActionType.MESSAGE:
-                    result = ScriptMessageAction(json[KEY_MESSAGE], json[KEY_MESSAGE_NOTIFICATION])
+                    result = ScriptMessageAction(get_value(KEY_MESSAGE), get_value(KEY_MESSAGE_NOTIFICATION))
                 case ScriptActionType.RUN_SCRIPT:
-                    result = ScriptRunAction(json[KEY_PATH])
+                    result = ScriptRunAction(get_value(KEY_PATH))
                 case _:
-                    assert False  # Input event is not implemented or bad type
+                    assert False # Input event is not implemented or bad type
         
-        result.set_time(float(json[KEY_TIME]))
+        result.set_time(float(get_value(KEY_TIME)))
         return result
