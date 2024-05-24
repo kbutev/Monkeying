@@ -28,7 +28,7 @@ class ScriptActionExecutionBuilder(ScriptActionExecutionBuilderProtocol):
                 result = ScriptActionMessageExecution(action)
             elif isinstance(action, ScriptRunAction):
                 script_file_path = action.path
-                script_data = ScriptStorage(script_file_path).read_from_file()
+                script_data = ScriptStorage(script_file_path).read_script_data_from_file()
                 result = ScriptActionScriptExecution(script_file_path, script_data.get_actions(), self)
             else:
                 assert False

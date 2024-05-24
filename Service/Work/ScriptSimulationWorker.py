@@ -37,7 +37,7 @@ class ScriptSimulationWorker(QThread):
         self._cancelled = False
         
         self.script_data = script_data.copy()
-        self.script_path = script_data.file_path
+        self.script_path = script_data.get_file_path()
         self.action_parser = di[ScriptActionParserProtocol]
         
         self.execution_count = 0
@@ -54,10 +54,10 @@ class ScriptSimulationWorker(QThread):
     # - Properties
     
     def script_info(self) -> ScriptInfo:
-        return self.script_data.info
+        return self.script_data.get_info()
     
     def script_config(self) -> ScriptConfiguration:
-        return self.script_data.config
+        return self.script_data.get_config()
     
     def state(self) -> ScriptSimulationWorkerState:
         with self.lock:

@@ -86,7 +86,7 @@ class EditScriptPresenter(Presenter):
         self.action_descriptions = self.action_string_parser.parse_actions(script_actions)
     
     def on_save(self):
-        ScriptStorage(self.get_script_path()).write_to_file(self.script_data)
+        ScriptStorage(self.get_script_path()).write_script_data_to_file(self.script_data)
         self.update_data(self.script_data)
     
     def on_configure_script(self):

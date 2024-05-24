@@ -39,8 +39,8 @@ class ConfigureScriptPresenter:
         assert self.widget is not None
         assert self.router is not None
         
-        info = self.script_data.info
-        config = self.script_data.config
+        info = self.script_data.get_info()
+        config = self.script_data.get_config()
         
         self.widget.set_name(info.name)
         self.widget.set_description(info.description)

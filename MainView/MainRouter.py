@@ -75,7 +75,7 @@ class MainRouter(Protocol):
         layout = QVBoxLayout()
         layout.addWidget(router.widget)
         dialog.set_layout(layout)
-        dialog.set_title(f'Run {script_data.info.name}')
+        dialog.set_title(f'Run {script_data.get_info().name}')
         dialog.set_delegate(router)
         dialog.present()
     

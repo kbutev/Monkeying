@@ -8,6 +8,7 @@ from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptData import ScriptData
 from Model.ScriptInfo import ScriptInfo
 from Model.ScriptInputEventAction import ScriptInputEventAction
+from Model.ScriptSummary import ScriptSummary
 from Parser.ScriptActionDescriptionParser import ScriptActionDescriptionParserProtocol, Grouping
 from Parser.ScriptActionTypeParser import ScriptActionTypeParserProtocol
 from Presenter.Presenter import Presenter
@@ -136,7 +137,9 @@ class RecordScriptPresenter(Presenter):
         actions = self.get_recorded_events_as_actions()
         info = self.get_script_info().copy()
         config = self.get_script_config().copy()
-        self.router.configure_script(self.widget, ScriptData(actions, info, config))
+        summary = ScriptSummary(info, config)
+        script = ScriptData(actions, summary)
+        self.router.configure_script(self.widget, script)
     
     def update_script_configuration(self, result: ScriptData):
         # ignore actions
@@ -164,8 +167,9 @@ class RecordScriptPresenter(Presenter):
         if info.is_name_default():
             info.name = file_path.stem()
         
-        script = ScriptData(actions, info, config)
-        ScriptStorage(file_path).write_to_file(script)
+        summary = ScriptSummary(info, config)
+        script = ScriptData(actions, summary)
+        ScriptStorage(file_path).write_script_data_to_file(script)
         
         self.widget.disable_save_recording()
         self.widget.on_script_save()

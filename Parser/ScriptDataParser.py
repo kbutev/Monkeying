@@ -2,16 +2,18 @@ import json
 from typing import Protocol, Any
 from kink import inject, di
 
+from Model.ScriptActions import ScriptActions
 from Model.ScriptConfiguration import ScriptConfiguration
 from Model.ScriptData import ScriptData
 from Model.ScriptInfo import ScriptInfo
+from Model.ScriptSummary import ScriptSummary
 from Parser.ScriptActionsParser import ScriptActionsParserProtocol
 from Utilities.Logger import LoggerProtocol
 
 JSON_DEFAULT_ROOT = 'root'
 JSON_INFO = 'info'
 JSON_CONFIGURATION = 'configuration'
-JSON_EVENTS = 'events'
+JSON_ACTIONS = 'actions'
 
 CURRENT_VERSION = '1.0'
 JSON_VERSION = 'version'
@@ -32,7 +34,7 @@ DEFAULT_INDENT = 2
 class ScriptDataParserProtocol(Protocol):
     def parse_to_dict(self, script: ScriptData) -> dict: pass
     def parse_to_json(self, script: ScriptData) -> Any: pass
-    def parse_to_script(self, data) -> ScriptData: pass
+    def parse_to_script(self, data, ignore_actions=False) -> ScriptData: pass
 
 
 @inject(use_factory=True, alias=ScriptDataParserProtocol)
@@ -50,14 +52,14 @@ class ScriptDataParser(ScriptDataParserProtocol):
     def set_indent(self, value: int): self.indent = value
 
     def parse_to_dict(self, script: ScriptData) -> dict:
-        events = self.actions_parser.parse_to_list(script.get_actions())
-        info = self.parse_script_info_to_dict(script.info, script.get_actions().count())
-        config = self.parse_script_config_to_dict(script.config)
+        actions = self.actions_parser.parse_to_list(script.get_actions())
+        info = self.parse_script_info_to_dict(script.get_info(), script.get_actions().count())
+        config = self.parse_script_config_to_dict(script.get_config())
         return {
             self.root: {
                 JSON_INFO: info,
                 JSON_CONFIGURATION: config,
-                JSON_EVENTS: events
+                JSON_ACTIONS: actions
             }
         }
     
@@ -65,7 +67,7 @@ class ScriptDataParser(ScriptDataParserProtocol):
         json_data = self.parse_to_dict(script)
         return json.dumps(json_data, indent=self.indent)
     
-    def parse_to_script(self, data) -> ScriptData:
+    def parse_to_script(self, data, ignore_actions=False) -> ScriptData:
         if isinstance(data, str):
             try:
                 data = json.loads(data)
@@ -85,10 +87,11 @@ class ScriptDataParser(ScriptDataParserProtocol):
                 raise ValueError(f"Bad script json, key '{key}' not found")
             return contents[key]
         
-        events = self.actions_parser.parse_to_actions(get_value(JSON_EVENTS))
+        actions = ScriptActions([]) if ignore_actions else self.actions_parser.parse_to_actions(get_value(JSON_ACTIONS))
         info = self.parse_json_to_script_info(get_value(JSON_INFO))
         config = self.parse_json_to_script_config(get_value(JSON_CONFIGURATION))
-        script = ScriptData(events, info, config)
+        summary = ScriptSummary(info, config)
+        script = ScriptData(actions, summary)
         return script
     
     def parse_script_info_to_dict(self, info: ScriptInfo, count: int) -> dict:

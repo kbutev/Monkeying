@@ -1,5 +1,6 @@
 from kink import di
 from Model.ScriptData import ScriptData
+from Model.ScriptSummary import ScriptSummary
 from Parser.ScriptDataParser import ScriptDataParserProtocol
 from Utilities.Logger import LoggerProtocol
 from Utilities.Path import Path
@@ -21,7 +22,7 @@ class ScriptStorage:
     
     # - Actions
     
-    def write_to_file(self, script: ScriptData, permissions='w', encoding="utf-8"):
+    def write_script_data_to_file(self, script: ScriptData, permissions='w', encoding="utf-8"):
         path = self.file_path.absolute
         
         self.logger.info(f"write data to \'{path}\'")
@@ -33,7 +34,7 @@ class ScriptStorage:
         
         self.logger.info(f"data written {path}")
     
-    def read_from_file(self, permissions='r', encoding="utf-8") -> ScriptData:
+    def read_script_data_from_file(self, permissions='r', encoding="utf-8", ignore_actions=False) -> ScriptData:
         path = self.file_path.absolute
         
         self.logger.info(f"read data from \'{path}\'...")
@@ -45,7 +46,7 @@ class ScriptStorage:
             if len(file_contents) == 0:
                 raise ValueError("empty file")
             
-            result = self.script_data_parser.parse_to_script(file_contents)
+            result = self.script_data_parser.parse_to_script(file_contents, ignore_actions=ignore_actions)
         except Exception as error:
             self.logger.error(f"reading failed, error: {error}")
             file.close()
@@ -58,3 +59,7 @@ class ScriptStorage:
         self.logger.info("data read successfully")
         
         return result
+    
+    def read_script_summary_from_file(self, permissions='r', encoding="utf-8") -> ScriptSummary:
+        script = self.read_script_data_from_file(permissions=permissions, encoding=encoding, ignore_actions=True)
+        return script.get_summary()

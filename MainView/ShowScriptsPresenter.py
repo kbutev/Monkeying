@@ -1,6 +1,7 @@
 from typing import Protocol
 from kink import di
 from Model.ScriptData import ScriptData
+from Model.ScriptSummary import ScriptSummary
 from Presenter.Presenter import Presenter
 from MainView.ShowScriptsWidget import ShowScriptsWidgetProtocol
 from Provider.ScriptDataProvider import ScriptDataProvider
@@ -76,10 +77,10 @@ class ShowScriptsPresenter(Presenter):
             storage = ScriptStorage(file_path)
             
             try:
-                script = storage.read_from_file()
-                name = script.info.name
+                script_summary = storage.read_script_summary_from_file()
+                name = script_summary.get_info().name
                 script_names.append(name)
-                result.append(script)
+                result.append(script_summary)
             except Exception:
                 pass
         
@@ -117,7 +118,7 @@ class ShowScriptsPresenter(Presenter):
         if self.thread_worker_manager.is_running_worker(THREAD_WORKER_READ_LABEL):
             return
 
-        script: ScriptData = self.scripts[index]
+        script: ScriptSummary = self.scripts[index]
         
         worker = ScriptDataProvider(script.get_file_path())
         self.thread_worker_manager.add_worker(worker, THREAD_WORKER_READ_LABEL)

@@ -32,7 +32,7 @@ class ScriptDataProvider(ScriptDataProviderProtocol):
         self.thread_worker_manager.add_worker(worker, THREAD_WORKER_FETCH_LABEL)
     
     def read_storage_data(self):
-        return self.storage.read_from_file()
+        return self.storage.read_script_data_from_file()
     
     def handle_completion(self, result, completion, failure):
         self.thread_worker_manager.remove_worker(THREAD_WORKER_FETCH_LABEL)
