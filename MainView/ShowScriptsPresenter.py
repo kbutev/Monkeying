@@ -1,5 +1,7 @@
 from typing import Protocol
 from kink import di
+
+from Dialog.Dialog import Dialog, build_error_dialog
 from Model.ScriptData import ScriptData
 from Model.ScriptSummary import ScriptSummary
 from Presenter.Presenter import Presenter
@@ -10,6 +12,7 @@ from Service.SettingsManager import SettingsManagerField, SettingsManagerProtoco
 from Service.ThreadWorkerManager import ThreadWorkerManagerProtocol
 from Utilities import Path as PathUtils
 from Utilities.Logger import LoggerProtocol
+from Utilities.Rect import Rect
 from Utilities.Threading import run_in_background_with_result
 
 
@@ -100,13 +103,14 @@ class ShowScriptsPresenter(Presenter):
         
         self.widget.set_data(script_names)
     
-    def _finish_opening_script(self, result):
+    def _finish_opening_script(self, result: ScriptData):
         self.thread_worker_manager.remove_worker(THREAD_WORKER_READ_LABEL)
         self.router.open_script(self.widget, result)
     
-    def _finish_opening_script_error(self, result):
-        # TODO: show dialog
-        pass
+    def _finish_opening_script_error(self, result: Exception):
+        self.thread_worker_manager.remove_worker(THREAD_WORKER_READ_LABEL)
+        dialog = build_error_dialog(self.widget, "Error", f"Bad script:\n{result}.")
+        dialog.present()
     
     # Script actions
     
