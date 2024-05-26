@@ -1,4 +1,6 @@
-from kink import di
+from typing import Protocol
+
+from kink import di, inject
 from pynput.mouse import Controller as MController
 from pynput.keyboard import Controller as KController
 from Model.InputEvent import InputEvent
@@ -8,7 +10,12 @@ from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEv
 from Utilities.Logger import LoggerProtocol
 
 
-class KeyboardEventSimulator:
+class KeyboardEventSimulatorProtocol(Protocol):
+    def simulate(self, event: InputEvent): pass
+
+
+@inject(alias=KeyboardEventSimulatorProtocol)
+class KeyboardEventSimulator(KeyboardEventSimulatorProtocol):
     
     # - Init
     
@@ -47,6 +54,11 @@ class KeyboardEventSimulator:
         self.keyboard.release(key)
 
 
+class MouseEventSimulatorProtocol(Protocol):
+    def simulate(self, event: InputEvent): pass
+
+
+@inject(alias=MouseEventSimulatorProtocol)
 class MouseEventSimulator:
     
     # - Init

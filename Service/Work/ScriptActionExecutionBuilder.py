@@ -3,12 +3,12 @@ from kink import di, inject
 from Model.ScriptAction import ScriptAction
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
-from Model.ScriptRunAction import ScriptRunAction
+from Model.ScriptRunAction import ScriptRunAction, NOOPScriptRunAction
 from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Service.Work.ScriptActionExecutionCluster import ScriptActionMessageExecution, ScriptActionScriptExecution, \
-    ScriptActionKeyExecution, ScriptSnapshotExecution
+    ScriptActionKeyExecution, ScriptSnapshotExecution, ScriptNOOPExecution
 
 
 class ScriptActionExecutionBuilderProtocol(Protocol):
@@ -28,6 +28,8 @@ class ScriptActionExecutionBuilder(ScriptActionExecutionBuilderProtocol):
         else:
             if isinstance(action, ScriptMessageAction):
                 result = ScriptActionMessageExecution(action)
+            elif isinstance(action, NOOPScriptRunAction):
+                result = ScriptNOOPExecution()
             elif isinstance(action, ScriptRunAction):
                 script_file_path = action.path
                 script_data = ScriptStorage(script_file_path).read_script_data_from_file()

@@ -6,7 +6,8 @@ from Model.ScriptActions import ScriptActions
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
 from Model.ScriptSnapshotAction import ScriptSnapshotAction
-from Service.EventSimulator import MouseEventSimulator, KeyboardEventSimulator
+from Service.EventSimulator import MouseEventSimulator, KeyboardEventSimulator, MouseEventSimulatorProtocol, \
+    KeyboardEventSimulatorProtocol
 from Service.OSNotificationCenter import OSNotificationCenterProtocol
 from Service.SettingsManager import SettingsManagerProtocol, SettingsManagerField
 from Service.Work.ScriptActionExecution import ScriptActionExecution
@@ -24,6 +25,33 @@ def current_short_time():
     return datetime.today().strftime('%H-%M-%S')
 
 
+class ScriptNOOPExecution(ScriptActionExecution):
+    
+    # - Init
+    
+    def __init__(self):
+        pass
+    
+    # - Properties
+    
+    def is_running(self) -> bool:
+        return False
+    
+    # - Actions
+    
+    def execute(self, parent=None):
+        pass
+    
+    def pause(self):
+        pass
+    
+    def resume(self):
+        pass
+    
+    def update(self):
+        return self.is_running()
+
+
 class ScriptActionKeyExecution(ScriptActionExecution):
     
     # - Init
@@ -31,8 +59,8 @@ class ScriptActionKeyExecution(ScriptActionExecution):
     def __init__(self, action: ScriptAction):
         assert isinstance(action, ScriptInputEventAction)
         self.action = action
-        self.mouse_simulator = MouseEventSimulator()
-        self.keyboard_simulator = KeyboardEventSimulator()
+        self.mouse_simulator = di[MouseEventSimulatorProtocol]
+        self.keyboard_simulator = di[KeyboardEventSimulatorProtocol]
         self.logger = di[LoggerProtocol]
     
     # - Properties

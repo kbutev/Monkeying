@@ -8,12 +8,11 @@ from EditScriptAction.EditScriptActionFieldPresenter import EditScriptActionFiel
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
 from pynput.mouse import Button as MouseKey
-
 from Model.ScriptAction import ScriptAction
 from Model.ScriptActionType import ScriptActionType
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
-from Model.ScriptRunAction import ScriptRunAction
+from Model.ScriptRunAction import ScriptRunAction, NOOPScriptRunAction, NOOP_SCRIPT
 from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Service.SettingsManager import SettingsManagerProtocol, SettingsManagerField
 from Service.Work.ScriptActionExecutionCluster import ScriptSnapshotExecution
@@ -159,10 +158,11 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
                 assert self.context_script_path is not None
                 
                 base_dir = self.settings.field_value(SettingsManagerField.SCRIPTS_PATH)
-                file_format = self.settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
-                items = PathUtils.directory_file_list(base_dir, file_format)
-                items = list(map(lambda item: item.last_component(), items))
+                items = self.get_all_script_files(base_dir)
                 context_script_file = self.context_script_path.last_component()
+                
+                # Include noop script (blank script that does nothing)
+                items.append(NOOP_SCRIPT)
                 
                 # Do not include the context script to avoid recursion
                 items.remove(context_script_file)
@@ -221,3 +221,8 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
         # Other
         
         return result
+    
+    def get_all_script_files(self, base_dir: str):
+        file_format = self.settings.field_value(SettingsManagerField.SCRIPTS_FILE_FORMAT)
+        items = PathUtils.directory_file_list(base_dir, file_format)
+        return list(map(lambda item: item.last_component(), items))

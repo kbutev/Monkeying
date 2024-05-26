@@ -4,7 +4,7 @@ from Utilities.Path import Path
 from Utilities import Path as PathUtil
 
 FLOAT_ROUND_DECIMALS = 3
-
+NOOP_SCRIPT = '<noop>'
 
 class ScriptRunAction(ScriptAction):
     
@@ -21,7 +21,7 @@ class ScriptRunAction(ScriptAction):
         self.path = path
     
     def copy(self):
-        result = ScriptRunAction(self.path, self.time())
+        result = ScriptRunAction(self.path.copy(), self.time())
         return result
     
     # - Properties
@@ -56,3 +56,31 @@ class ScriptRunAction(ScriptAction):
     
     def value_as_string(self) -> str:
         return f'{self.path.last_component()}'
+
+
+class NOOPScriptRunAction(ScriptRunAction):
+    
+    # - Init
+    
+    def __init__(self, time: float):
+        super(NOOPScriptRunAction, self).__init__(NOOP_SCRIPT, time)
+        self.timestamp = time
+    
+    def copy(self):
+        result = NOOPScriptRunAction(self.time())
+        return result
+    
+    # - Properties
+    
+    def time(self):
+        return self.timestamp
+    
+    def set_time(self, value):
+        self.timestamp = round(value, FLOAT_ROUND_DECIMALS)
+    
+    def action_type(self) -> ScriptActionType:
+        return ScriptActionType.RUN_SCRIPT
+    
+    def value_as_string(self) -> str:
+        return f'NOOP'
+
