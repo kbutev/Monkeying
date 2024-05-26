@@ -1,10 +1,12 @@
 from typing import Protocol
-from kink import inject
+from kink import inject, di
 from Model import ScriptAction
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
+from Model.ScriptCommandAction import ScriptCommandAction
 from Model.ScriptSnapshotAction import ScriptSnapshotAction
+from Service.SettingsManager import SettingsManagerProtocol, SettingsManagerField
 from Utilities.Point import Point
 from Model.ScriptActionJSON import *
 from Model.ScriptActionType import ScriptActionType
@@ -62,6 +64,8 @@ class ScriptActionParser(ScriptActionParserProtocol):
             result[KEY_PATH] = ''
         elif isinstance(action, ScriptSnapshotAction):
             result[KEY_PATH] = action.file_name()
+        elif isinstance(action, ScriptCommandAction):
+            result[KEY_COMMAND] = action.command()
         else:
             assert False # ScriptAction implement: not implemented
         
@@ -105,16 +109,20 @@ class ScriptActionParser(ScriptActionParserProtocol):
                 case ScriptActionType.MESSAGE:
                     result = ScriptMessageAction(get_value(KEY_MESSAGE), get_value(KEY_MESSAGE_NOTIFICATION), 0)
                 case ScriptActionType.RUN_SCRIPT:
-                    path = json[KEY_PATH]
+                    path = get_value(KEY_PATH)
                     
                     if path != NOOP_SCRIPT:
-                        result = ScriptRunAction(get_value(KEY_PATH), 0)
+                        result = ScriptRunAction(path, 0)
                     else:
                         result = NOOPScriptRunAction(0)
                 case ScriptActionType.SNAPSHOT:
                     result = ScriptSnapshotAction(get_value(KEY_PATH), 0)
+                case ScriptActionType.COMMAND:
+                    settings = di[SettingsManagerProtocol]
+                    directory = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+                    result = ScriptCommandAction(directory, get_value(KEY_COMMAND), 0)
                 case _:
-                    assert False # Input event is not implemented or bad type
+                    assert False # # ScriptAction implement: not implemented or bad type
         
         result.set_time(float(get_value(KEY_TIME)))
         return result

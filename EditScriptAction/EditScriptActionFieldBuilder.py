@@ -10,6 +10,7 @@ from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEv
 from pynput.mouse import Button as MouseKey
 from Model.ScriptAction import ScriptAction
 from Model.ScriptActionType import ScriptActionType
+from Model.ScriptCommandAction import ScriptCommandAction
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
 from Model.ScriptRunAction import ScriptRunAction, NOOPScriptRunAction, NOOP_SCRIPT
@@ -188,6 +189,13 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
                 
                 fields.append(file_name)
                 fields.append(info_dialog_btn)
+            elif isinstance(action, ScriptCommandAction):
+                file_name = EditScriptActionFieldString('Command')
+                presenter = EditScriptActionFieldPresenter(action.command, action.set_command)
+                file_name.set_delegate(presenter)
+                presenter.start(file_name)
+                
+                fields.append(file_name)
             else:
                 assert False # ScriptAction implement: not implemented
         

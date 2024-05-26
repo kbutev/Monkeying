@@ -1,8 +1,10 @@
+import os
 from datetime import datetime
 import time
 from kink import di
 from Model.ScriptAction import ScriptAction
 from Model.ScriptActions import ScriptActions
+from Model.ScriptCommandAction import ScriptCommandAction
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
 from Model.ScriptSnapshotAction import ScriptSnapshotAction
@@ -316,3 +318,37 @@ class ScriptSnapshotExecution(ScriptActionExecution):
     
     def update(self):
         return self.is_running()
+
+
+class ScriptCommandExecution(ScriptActionExecution):
+    
+    # - Init
+    
+    def __init__(self, action: ScriptAction):
+        assert isinstance(action, ScriptCommandAction)
+        self.action = action
+        self.directory = action.directory().absolute
+        self.command = action.command()
+        self.logger = di[LoggerProtocol]
+    
+    # - Properties
+    
+    def is_running(self) -> bool:
+        return False
+    
+    # - Actions
+    
+    def execute(self, parent=None):
+        self.logger.info(f"run command '{self.command}' @ {self.directory}")
+        os.chdir(self.directory)
+        os.system(self.command) # TODO: run this in update? So it doesnt block the caller
+    
+    def pause(self):
+        pass
+    
+    def resume(self):
+        pass
+    
+    def update(self):
+        return self.is_running()
+

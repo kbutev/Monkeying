@@ -1,6 +1,7 @@
 from typing import Protocol, Any
 from kink import di, inject
 from Model.ScriptAction import ScriptAction
+from Model.ScriptCommandAction import ScriptCommandAction
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
 from Model.ScriptRunAction import ScriptRunAction, NOOPScriptRunAction
@@ -8,7 +9,7 @@ from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
 from Service.Work.ScriptActionExecutionCluster import ScriptActionMessageExecution, ScriptActionScriptExecution, \
-    ScriptActionKeyExecution, ScriptSnapshotExecution, ScriptNOOPExecution
+    ScriptActionKeyExecution, ScriptSnapshotExecution, ScriptNOOPExecution, ScriptCommandExecution
 
 
 class ScriptActionExecutionBuilderProtocol(Protocol):
@@ -36,6 +37,8 @@ class ScriptActionExecutionBuilder(ScriptActionExecutionBuilderProtocol):
                 result = ScriptActionScriptExecution(script_file_path, script_data.get_actions(), self)
             elif isinstance(action, ScriptSnapshotAction):
                 result = ScriptSnapshotExecution(action)
+            elif isinstance(action, ScriptCommandAction):
+                result = ScriptCommandExecution(action)
             else:
                 assert False # ScriptAction implement: not implemented
         

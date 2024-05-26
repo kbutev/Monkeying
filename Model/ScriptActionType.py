@@ -16,6 +16,7 @@ class ScriptActionType(enum.StrEnum):
     MESSAGE = "action.message"
     RUN_SCRIPT = "action.run_script"
     SNAPSHOT = "action.snapshot"
+    COMMAND = "action.command"
     
     # - Helpers
     

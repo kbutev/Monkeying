@@ -12,6 +12,7 @@ KEY_POINT_DT_Y = "dt_y"
 KEY_MESSAGE = "message"
 KEY_MESSAGE_NOTIFICATION = "notification"
 KEY_PATH = "path"
+KEY_COMMAND = "command"
 
 
 def default_event_as_json(type, time=0) -> dict:
@@ -48,6 +49,8 @@ def default_event_as_json(type, time=0) -> dict:
         result[KEY_PATH] = ''
     elif type == ScriptActionType.SNAPSHOT:
         result[KEY_PATH] = 'snapshot'
+    elif type == ScriptActionType.COMMAND:
+        result[KEY_COMMAND] = ''
     else:
         assert False # ScriptAction implement: not implemented
     
