@@ -9,6 +9,18 @@ def current_date():
     return datetime.today().strftime('%Y.%m.%d %H:%M:%S.%f')[:-3]
 
 
+def current_short_date():
+    return datetime.today().strftime('%Y.%m.%d')
+
+
+def current_long_time():
+    return datetime.today().strftime('%H:%M:%S.%f')[:-3]
+
+
+def current_short_time():
+    return datetime.today().strftime('%H:%M:%S')
+
+
 def get_current_thread_name():
     return 'main' if current_thread_is_main() else threading.get_ident()
 

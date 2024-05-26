@@ -1,4 +1,3 @@
-from Model.InputEvent import InputEvent
 from Model.ScriptAction import ScriptAction
 from Model.ScriptActionType import ScriptActionType
 from Utilities.Path import Path
@@ -11,7 +10,7 @@ class ScriptRunAction(ScriptAction):
     
     # - Init
     
-    def __init__(self, path, time=0):
+    def __init__(self, path, time: float):
         if isinstance(path, str):
             path = Path(path)
         

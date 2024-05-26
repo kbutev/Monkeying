@@ -3,7 +3,7 @@ from kink import di, inject
 from PyQt5.QtWidgets import QWidget
 from EditScriptAction.EditScriptActionField import EditScriptActionFieldFloat, EditScriptActionFieldPoint, \
     EditScriptActionFieldKeyboardChar, EditScriptActionFieldDropDown, EditScriptActionField, \
-    EditScriptActionFieldString, EditScriptActionFieldBool
+    EditScriptActionFieldString, EditScriptActionFieldBool, EditScriptActionFieldInfoDialog
 from EditScriptAction.EditScriptActionFieldPresenter import EditScriptActionFieldPresenter
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
@@ -14,7 +14,9 @@ from Model.ScriptActionType import ScriptActionType
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
 from Model.ScriptRunAction import ScriptRunAction
+from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Service.SettingsManager import SettingsManagerProtocol, SettingsManagerField
+from Service.Work.ScriptActionExecutionCluster import ScriptSnapshotExecution
 from Utilities import Path as PathUtils
 from Utilities.Path import Path
 
@@ -62,7 +64,7 @@ class EditScriptActionFieldBuilderContext:
             elif isinstance(field, EditScriptActionFieldPoint) and self.key_formatter is not None:
                 field.delegate.value_parser = self.point_formatter
         
-        return self.fields
+        return reversed(self.fields)
 
 
 class EditScriptActionFieldBuilderProtocol(Protocol):
@@ -174,8 +176,20 @@ class EditScriptActionFieldBuilder(EditScriptActionFieldBuilderProtocol):
                 presenter.start(paths)
                 
                 fields.append(paths)
+            elif isinstance(action, ScriptSnapshotAction):
+                file_name = EditScriptActionFieldString('File name')
+                presenter = EditScriptActionFieldPresenter(action.file_name, action.set_file_name)
+                file_name.set_delegate(presenter)
+                presenter.start(file_name)
+                
+                info = f'date = {ScriptSnapshotExecution.DATE_SPECIFIER}'
+                info += f'\ntime = {ScriptSnapshotExecution.TIME_SPECIFIER}'
+                info_dialog_btn = EditScriptActionFieldInfoDialog('Format specifiers', info)
+                
+                fields.append(file_name)
+                fields.append(info_dialog_btn)
             else:
-                assert False
+                assert False # ScriptAction implement: not implemented
         
         return EditScriptActionFieldBuilderContext(fields, type_field, time_field)
     

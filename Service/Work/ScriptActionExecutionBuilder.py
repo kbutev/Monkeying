@@ -4,9 +4,11 @@ from Model.ScriptAction import ScriptAction
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
 from Model.ScriptRunAction import ScriptRunAction
+from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Service.ScriptStorage import ScriptStorage
 from Service.SettingsManager import SettingsManagerField, SettingsManagerProtocol
-from Service.Work.ScriptActionExecutionCluster import ScriptActionMessageExecution, ScriptActionScriptExecution, ScriptActionKeyExecution
+from Service.Work.ScriptActionExecutionCluster import ScriptActionMessageExecution, ScriptActionScriptExecution, \
+    ScriptActionKeyExecution, ScriptSnapshotExecution
 
 
 class ScriptActionExecutionBuilderProtocol(Protocol):
@@ -30,7 +32,9 @@ class ScriptActionExecutionBuilder(ScriptActionExecutionBuilderProtocol):
                 script_file_path = action.path
                 script_data = ScriptStorage(script_file_path).read_script_data_from_file()
                 result = ScriptActionScriptExecution(script_file_path, script_data.get_actions(), self)
+            elif isinstance(action, ScriptSnapshotAction):
+                result = ScriptSnapshotExecution(action)
             else:
-                assert False
+                assert False # ScriptAction implement: not implemented
         
         return result

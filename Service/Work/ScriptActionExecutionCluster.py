@@ -1,17 +1,27 @@
+from datetime import datetime
 import time
 from kink import di
-
 from Model.ScriptAction import ScriptAction
 from Model.ScriptActions import ScriptActions
 from Model.ScriptInputEventAction import ScriptInputEventAction
 from Model.ScriptMessageAction import ScriptMessageAction
-from Model.ScriptRunAction import ScriptRunAction
+from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Service.EventSimulator import MouseEventSimulator, KeyboardEventSimulator
 from Service.OSNotificationCenter import OSNotificationCenterProtocol
+from Service.SettingsManager import SettingsManagerProtocol, SettingsManagerField
 from Service.Work.ScriptActionExecution import ScriptActionExecution
 from Utilities import Path
 from Utilities.Logger import LoggerProtocol
 from Utilities.Timer import Timer
+from mss import mss
+
+
+def current_short_date():
+    return datetime.today().strftime('%Y.%m.%d')
+
+
+def current_short_time():
+    return datetime.today().strftime('%H-%M-%S')
 
 
 class ScriptActionKeyExecution(ScriptActionExecution):
@@ -212,3 +222,69 @@ class ScriptActionScriptExecution(ScriptActionExecution):
             self.timer.stop()
         elif self.timer.is_paused():
             self.timer.resume()
+
+
+class ScriptSnapshotExecution(ScriptActionExecution):
+    
+    FORMAT = '.png'
+    FOLDER = 'snapshots'
+    DATE_SPECIFIER = '{YY.MM.dd}'
+    TIME_SPECIFIER = '{HH-MM-ss}'
+    
+    # - Init
+    
+    def __init__(self, action: ScriptAction):
+        assert isinstance(action, ScriptSnapshotAction)
+        self.action = action
+        
+        self.file_name = action.file_name()
+        
+        self.logger = di[LoggerProtocol]
+
+        settings = di[SettingsManagerProtocol]
+        self.base_path = settings.field_value(SettingsManagerField.SCRIPTS_PATH)
+    
+    # - Properties
+    
+    def is_running(self) -> bool:
+        return False
+    
+    def formatted_path(self) -> Path:
+        name = self.file_name
+        
+        if ScriptSnapshotExecution.DATE_SPECIFIER in name:
+            date = current_short_date()
+            name = name.replace(ScriptSnapshotExecution.DATE_SPECIFIER, date)
+        
+        if ScriptSnapshotExecution.TIME_SPECIFIER in name:
+            date = current_short_time()
+            name = name.replace(ScriptSnapshotExecution.TIME_SPECIFIER, date)
+        
+        if not name.endswith(ScriptSnapshotExecution.FORMAT):
+            name = f'{name}{ScriptSnapshotExecution.FORMAT}'
+        
+        path = self.base_path.copy()
+        
+        path.append_to_end(name)
+        
+        return path
+    
+    # - Actions
+    
+    def execute(self, parent=None):
+        with mss() as sct:
+            path = self.formatted_path()
+            self.logger.info(f"taking snapshot and saving it to '{path.absolute}'")
+            try:
+                sct.shot(output=path.absolute)
+            except Exception as error:
+                self.logger.error(f"snapshot failed, error: {error}")
+    
+    def pause(self):
+        pass
+    
+    def resume(self):
+        pass
+    
+    def update(self):
+        return self.is_running()

@@ -2,6 +2,8 @@ from typing import Protocol
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QDoubleValidator, QRegularExpressionValidator
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QCheckBox
+
+from Dialog.Dialog import Dialog, build_info_dialog
 from Utilities.Point import Point
 
 
@@ -309,3 +311,39 @@ class EditScriptActionFieldPoint(EditScriptActionField):
     def on_value_changed(self):
         self.value = Point(float(self.x_field.text()), float(self.y_field.text()))
         self.delegate.set_value(self.value)
+
+
+class EditScriptActionFieldInfoDialog(EditScriptActionField):
+    
+    # - Init
+    
+    def __init__(self, name: str, body: str, parent=None):
+        super(EditScriptActionFieldInfoDialog, self).__init__(parent)
+        
+        self.name = name
+        self.body = body
+        
+        layout = QHBoxLayout()
+        self.button = QPushButton(name)
+        layout.addWidget(self.button)
+        self.setLayout(layout)
+    
+    # - Properties
+    
+    def set_value(self, value):
+        pass
+    
+    def enable_connection(self):
+        self.button.clicked.connect(self.on_click)
+    
+    def disable_connection(self):
+        self.button.clicked.disconnect()
+    
+    # Actions
+    
+    def on_click(self):
+        dialog = build_info_dialog(self, self.name, self.body)
+        dialog.present()
+    
+    def on_value_changed(self):
+        pass

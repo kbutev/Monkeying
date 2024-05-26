@@ -4,6 +4,7 @@ from Model import ScriptAction
 from Model.KeyPressType import KeyPressType
 from Model.KeyboardInputEvent import KeystrokeEvent
 from Model.MouseInputEvent import MouseMoveEvent, MouseClickEvent, MouseScrollEvent
+from Model.ScriptSnapshotAction import ScriptSnapshotAction
 from Utilities.Point import Point
 from Model.ScriptActionJSON import *
 from Model.ScriptActionType import ScriptActionType
@@ -57,8 +58,10 @@ class ScriptActionParser(ScriptActionParserProtocol):
             result[KEY_MESSAGE_NOTIFICATION] = action.notifications_enabled()
         elif isinstance(action, ScriptRunAction):
             result[KEY_PATH] = action.path.absolute
+        elif isinstance(action, ScriptSnapshotAction):
+            result[KEY_PATH] = action.file_name()
         else:
-            assert False
+            assert False # ScriptAction implement: not implemented
         
         return result
     
@@ -98,9 +101,11 @@ class ScriptActionParser(ScriptActionParserProtocol):
         else:
             match action_type:
                 case ScriptActionType.MESSAGE:
-                    result = ScriptMessageAction(get_value(KEY_MESSAGE), get_value(KEY_MESSAGE_NOTIFICATION))
+                    result = ScriptMessageAction(get_value(KEY_MESSAGE), get_value(KEY_MESSAGE_NOTIFICATION), 0)
                 case ScriptActionType.RUN_SCRIPT:
-                    result = ScriptRunAction(get_value(KEY_PATH))
+                    result = ScriptRunAction(get_value(KEY_PATH), 0)
+                case ScriptActionType.SNAPSHOT:
+                    result = ScriptSnapshotAction(get_value(KEY_PATH), 0)
                 case _:
                     assert False # Input event is not implemented or bad type
         

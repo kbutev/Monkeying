@@ -5,6 +5,23 @@ from PyQt5.QtWidgets import QDialog, QWidget, QVBoxLayout, QLabel, QPushButton
 from Utilities.Rect import Rect
 
 
+def build_info_dialog(parent, title, body, desired_size: Rect = Rect(480, 320)):
+    dialog = Dialog(parent, desired_size=desired_size)
+    dialog.set_title(title)
+    
+    layout = QVBoxLayout()
+    label = QLabel(body)
+    label.setWordWrap(True)
+    label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+    ok_button = QPushButton("Ok")
+    layout.addWidget(label)
+    layout.addWidget(ok_button)
+    ok_button.clicked.connect(dialog.close)
+    
+    dialog.set_layout(layout)
+    return dialog
+
+
 def build_error_dialog(parent, title, body, desired_size: Rect=Rect(480, 320)):
     dialog = Dialog(parent, desired_size=desired_size)
     dialog.set_title(title)

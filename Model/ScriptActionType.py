@@ -1,6 +1,8 @@
 import enum
 
 
+# When adding a new type, add a new class for the corresponding type and then,
+# search for "# ScriptAction implement" and implement the appropriate code
 class ScriptActionType(enum.StrEnum):
     KEYBOARD_PRESS = "keyboard.press"
     KEYBOARD_RELEASE = "keyboard.release"
@@ -13,6 +15,7 @@ class ScriptActionType(enum.StrEnum):
     
     MESSAGE = "action.message"
     RUN_SCRIPT = "action.run_script"
+    SNAPSHOT = "action.snapshot"
     
     # - Helpers
     

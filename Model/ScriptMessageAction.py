@@ -1,4 +1,3 @@
-from Model.InputEvent import InputEvent
 from Model.ScriptAction import ScriptAction
 from Model.ScriptActionType import ScriptActionType
 
@@ -9,7 +8,7 @@ class ScriptMessageAction(ScriptAction):
     
     # - Init
     
-    def __init__(self, message_string: str, notification, time=0):
+    def __init__(self, message_string: str, notification: bool, time: float):
         super(ScriptMessageAction, self).__init__()
         self.timestamp = time
         self.message_string = message_string

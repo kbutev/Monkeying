@@ -46,6 +46,10 @@ def default_event_as_json(type, time=0) -> dict:
         result[KEY_MESSAGE_NOTIFICATION] = False
     elif type == ScriptActionType.RUN_SCRIPT:
         result[KEY_PATH] = ''
+    elif type == ScriptActionType.SNAPSHOT:
+        result[KEY_PATH] = 'snapshot'
+    else:
+        assert False # ScriptAction implement: not implemented
     
     result[KEY_TIME] = str(time)
     return result

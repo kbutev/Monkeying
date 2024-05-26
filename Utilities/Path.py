@@ -51,7 +51,7 @@ class Path:
     
     def append_to_end(self, value):
         assert system_file_separator() not in value
-        self.absolute += value
+        self.absolute += f'{system_file_separator()}{value}'
 
 
 def system_file_separator() -> str:
